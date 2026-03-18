@@ -31,12 +31,14 @@ const login = async (req, res, next) => {
     );
 
     if (!user) {
+      console.log("[auth] login failed – user not found:", email);
       return res
         .status(401)
         .json({ success: false, message: "Invalid credentials" });
     }
 
     if (!user.isActive) {
+      console.log("[auth] login failed – account deactivated:", email);
       return res
         .status(403)
         .json({
@@ -48,6 +50,7 @@ const login = async (req, res, next) => {
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
+      console.log("[auth] login failed – invalid password:", email);
       return res
         .status(401)
         .json({ success: false, message: "Invalid credentials" });
@@ -61,6 +64,7 @@ const login = async (req, res, next) => {
     const userResponse = user.toJSON(); // passwordHash stripped by transform
 
     if (["companyUser"].includes(user.role)) {
+      console.log("[auth] companyUser login success:", { userId: user._id, email: user.email });
       notifyUserLogin(user._id, token).catch(() => {});
     }
 

@@ -18,14 +18,13 @@ function getHeaders() {
  */
 async function notifyUserLogin(userId, token) {
   if (!BASE_URL) {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[postLogin] POST_LOGIN_API_URL not set – skipping user-login');
-    }
+    console.log('[postLogin] POST_LOGIN_API_URL not set – skipping user-login');
     return;
   }
 
+  console.log('[postLogin] calling user-login for userId:', userId);
   try {
-    await axios.post(
+    const res = await axios.post(
       `${BASE_URL}/api/post-login/user-login`,
       {
         userId: String(userId),
@@ -38,11 +37,13 @@ async function notifyUserLogin(userId, token) {
         timeout: 5000,
       }
     );
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[postLogin] user-login notified for userId:', userId);
-    }
+    console.log('[postLogin] user-login success:', { userId, status: res.status });
   } catch (err) {
-    console.error('[postLogin] user-login failed:', err.response?.data || err.message);
+    console.error('[postLogin] user-login failed:', {
+      userId,
+      status: err.response?.status,
+      data: err.response?.data || err.message,
+    });
   }
 }
 
@@ -53,14 +54,13 @@ async function notifyUserLogin(userId, token) {
  */
 async function notifyUserLogout(userId) {
   if (!BASE_URL) {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[postLogin] POST_LOGIN_API_URL not set – skipping user-logout');
-    }
+    console.log('[postLogin] POST_LOGIN_API_URL not set – skipping user-logout');
     return;
   }
 
+  console.log('[postLogin] calling user-logout for userId:', userId);
   try {
-    await axios.post(
+    const res = await axios.post(
       `${BASE_URL}/api/post-login/user-logout`,
       { userId: String(userId) },
       {
@@ -68,11 +68,13 @@ async function notifyUserLogout(userId) {
         timeout: 5000,
       }
     );
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[postLogin] user-logout notified for userId:', userId);
-    }
+    console.log('[postLogin] user-logout success:', { userId, status: res.status });
   } catch (err) {
-    console.error('[postLogin] user-logout failed:', err.response?.data || err.message);
+    console.error('[postLogin] user-logout failed:', {
+      userId,
+      status: err.response?.status,
+      data: err.response?.data || err.message,
+    });
   }
 }
 
