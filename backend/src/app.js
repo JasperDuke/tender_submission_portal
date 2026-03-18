@@ -7,6 +7,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const tenderRoutes = require('./routes/tenderRoutes');
 const proposalRoutes = require('./routes/proposalRoutes');
 const integrationRoutes = require('./routes/integrationRoutes');
+const triggerRoutes = require('./routes/triggerRoutes');
 const { errorHandler, notFound } = require('./middleware/errorMiddleware');
 
 const app = express();
@@ -38,6 +39,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/tenders', tenderRoutes);
 app.use('/api/proposals', proposalRoutes);
+app.use('/api/integration/trigger', triggerRoutes);
 app.use('/api/integration', integrationRoutes);
 
 // ── Error handling ────────────────────────────────────────────────────────────

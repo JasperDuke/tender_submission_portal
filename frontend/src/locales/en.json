@@ -301,6 +301,20 @@
     "addSuccess": "Integration added successfully. To change it, remove first then add again.",
     "removeSuccess": "Integration removed. You can now add a new one.",
     "addFailed": "Failed to add integration.",
-    "removeFailed": "Failed to remove integration."
+    "removeFailed": "Failed to remove integration.",
+    "trigger": "Trigger",
+    "triggerDesc": "Webhook called when a vendor submits a proposal. One config only. Remove before adding new.",
+    "apiUrlLabel": "API URL",
+    "apiUrlPlaceholder": "https://backend.atenxion.ai/api/trigger/agent-trigger",
+    "triggerTokenLabel": "Trigger token",
+    "triggerTokenPlaceholder": "Get from Agent General Settings",
+    "apiPublicUrlLabel": "API public URL (optional)",
+    "apiPublicUrlPlaceholder": "https://api-demosourcing.atenxion.ai",
+    "apiPublicUrlHelper": "Base URL for attachment links. Required for attachments in webhook.",
+    "addTrigger": "Add trigger",
+    "triggerAddSuccess": "Trigger config added. Webhook will fire on vendor proposal submit.",
+    "triggerRemoveSuccess": "Trigger config removed.",
+    "triggerAddFailed": "Failed to add trigger config.",
+    "triggerRemoveFailed": "Failed to remove trigger config."
   }
 }

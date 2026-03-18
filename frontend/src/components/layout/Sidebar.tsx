@@ -24,7 +24,7 @@ import {
   PersonAdd as PersonAddIcon,
   IntegrationInstructions as IntegrationIcon,
 } from "@mui/icons-material";
-import { FiBriefcase } from "react-icons/fi";
+
 import { useAuth, UserRole } from "@/context/AuthContext";
 import { useThemeMode } from "@/context/ThemeContext";
 import { useLanguage } from "@/context/LanguageContext";
@@ -58,7 +58,11 @@ const getNavItems = (role: UserRole): NavItem[] => {
   };
   if (role === "admin") {
     return [
-      { labelKey: "nav.overview", path: "/dashboard", icon: <DashboardIcon fontSize="small" /> },
+      {
+        labelKey: "nav.overview",
+        path: "/dashboard",
+        icon: <DashboardIcon fontSize="small" />,
+      },
       {
         labelKey: "nav.userManagement",
         path: "/admin/users",
@@ -70,15 +74,31 @@ const getNavItems = (role: UserRole): NavItem[] => {
         path: "/admin/users/create",
         icon: <PersonAddIcon fontSize="small" />,
       },
-      { labelKey: "nav.allTenders", path: "/tenders", icon: <TenderIcon fontSize="small" /> },
-      { labelKey: "nav.integration", path: "/integration", icon: <IntegrationIcon fontSize="small" /> },
+      {
+        labelKey: "nav.allTenders",
+        path: "/tenders",
+        icon: <TenderIcon fontSize="small" />,
+      },
+      {
+        labelKey: "nav.integration",
+        path: "/integration",
+        icon: <IntegrationIcon fontSize="small" />,
+      },
       profileItem,
     ];
   }
   if (role === "companyUser") {
     return [
-      { labelKey: "nav.overview", path: "/dashboard", icon: <DashboardIcon fontSize="small" /> },
-      { labelKey: "nav.tenders", path: "/tenders", icon: <TenderIcon fontSize="small" /> },
+      {
+        labelKey: "nav.overview",
+        path: "/dashboard",
+        icon: <DashboardIcon fontSize="small" />,
+      },
+      {
+        labelKey: "nav.tenders",
+        path: "/tenders",
+        icon: <TenderIcon fontSize="small" />,
+      },
       {
         labelKey: "nav.postNewTender",
         path: "/tenders/create",
@@ -88,9 +108,21 @@ const getNavItems = (role: UserRole): NavItem[] => {
     ];
   }
   return [
-    { labelKey: "nav.overview", path: "/dashboard", icon: <DashboardIcon fontSize="small" /> },
-    { labelKey: "nav.activeTenders", path: "/tenders", icon: <TenderIcon fontSize="small" /> },
-    { labelKey: "nav.mySubmissions", path: "/proposals", icon: <ProposalIcon fontSize="small" /> },
+    {
+      labelKey: "nav.overview",
+      path: "/dashboard",
+      icon: <DashboardIcon fontSize="small" />,
+    },
+    {
+      labelKey: "nav.activeTenders",
+      path: "/tenders",
+      icon: <TenderIcon fontSize="small" />,
+    },
+    {
+      labelKey: "nav.mySubmissions",
+      path: "/proposals",
+      icon: <ProposalIcon fontSize="small" />,
+    },
     profileItem,
   ];
 };
@@ -141,7 +173,7 @@ export default function Sidebar({
           px: 3,
           py: 2.5,
           display: "flex",
-          alignItems: "center",
+          alignItems: "flex-end",
           gap: 1.5,
           background: isDark
             ? "linear-gradient(135deg, rgba(37,99,235,0.3) 0%, rgba(124,58,237,0.3) 100%)"
@@ -151,35 +183,15 @@ export default function Sidebar({
             ? "rgba(255,255,255,0.07)"
             : "rgba(255,255,255,0.2)",
           flexShrink: 0,
+          justifyContent: "center",
         }}
       >
         <Box
-          sx={{
-            p: 0.75,
-            borderRadius: "10px",
-            bgcolor: isDark ? "rgba(37,99,235,0.3)" : "rgba(255,255,255,0.2)",
-            display: "flex",
-          }}
-        >
-          <FiBriefcase size={20} color="#fff" />
-        </Box>
-        <Box>
-          <Typography
-            variant="subtitle1"
-            fontWeight={800}
-            color="#fff"
-            letterSpacing="-0.02em"
-            lineHeight={1.2}
-          >
-            {t("app.brand")}
-          </Typography>
-          <Typography
-            variant="caption"
-            sx={{ color: "rgba(255,255,255,0.65)", fontSize: "0.7rem" }}
-          >
-            {t("app.title")}
-          </Typography>
-        </Box>
+          component="img"
+          src="/logo-cyan.svg"
+          alt="Brillar"
+          sx={{ height: 34, width: "auto", objectFit: "contain" }}
+        />
       </Box>
 
       {/* ── User card ── */}

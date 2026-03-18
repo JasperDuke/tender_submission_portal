@@ -301,6 +301,20 @@
     "addSuccess": "Integrasi berjaya ditambah. Untuk menukar, buang dahulu kemudian tambah semula.",
     "removeSuccess": "Integrasi dibuang. Anda boleh menambah yang baru.",
     "addFailed": "Gagal menambah integrasi.",
-    "removeFailed": "Gagal membuang integrasi."
+    "removeFailed": "Gagal membuang integrasi.",
+    "trigger": "Pencetus",
+    "triggerDesc": "Webhook dipanggil apabila pembekal menyerahkan cadangan. Satu konfigurasi sahaja. Buang dahulu sebelum menambah baru.",
+    "apiUrlLabel": "URL API",
+    "apiUrlPlaceholder": "https://backend.atenxion.ai/api/trigger/agent-trigger",
+    "triggerTokenLabel": "Token pencetus",
+    "triggerTokenPlaceholder": "Dapatkan dari Tetapan Umum Ejen",
+    "apiPublicUrlLabel": "URL API awam (pilihan)",
+    "apiPublicUrlPlaceholder": "https://api-demosourcing.atenxion.ai",
+    "apiPublicUrlHelper": "URL asas untuk pautan lampiran. Diperlukan untuk lampiran dalam webhook.",
+    "addTrigger": "Tambah pencetus",
+    "triggerAddSuccess": "Konfigurasi pencetus ditambah. Webhook akan dihantar apabila pembekal menyerahkan cadangan.",
+    "triggerRemoveSuccess": "Konfigurasi pencetus dibuang.",
+    "triggerAddFailed": "Gagal menambah konfigurasi pencetus.",
+    "triggerRemoveFailed": "Gagal membuang konfigurasi pencetus."
   }
 }

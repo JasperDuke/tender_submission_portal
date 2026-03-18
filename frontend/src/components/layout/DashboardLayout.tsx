@@ -6,7 +6,7 @@ import Topbar from "./Topbar";
 import Sidebar from "./Sidebar";
 import IntegrationWidget from "@/components/IntegrationWidget";
 
-const DRAWER_WIDTH = 260;
+const DRAWER_WIDTH = 240;
 
 interface DashboardLayoutProps {
   children: React.ReactNode;

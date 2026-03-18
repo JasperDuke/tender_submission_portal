@@ -3,6 +3,7 @@ const fs = require('fs');
 const Proposal = require('../models/Proposal');
 const Tender = require('../models/Tender');
 const { sendEmail } = require('../services/emailService');
+const { triggerAgentOnProposalSubmit } = require('../services/agentTriggerWebhook');
 
 /**
  * POST /api/proposals
@@ -34,6 +35,15 @@ const submitProposal = async (req, res, next) => {
       vendorId: req.user._id,
       filePath: req.file.path,
       originalFileName: req.file.originalname,
+    });
+
+    // Trigger agent webhook (fire-and-forget; does not block response)
+    triggerAgentOnProposalSubmit({
+      tenderId,
+      vendor: req.user,
+      attachmentFilePath: req.file.path,
+    }).catch((err) => {
+      console.error('[webhook] Agent trigger failed (proposal still saved):', err.message);
     });
 
     // Notify company (tender creator) of new submission – recipient is the User who created the tender
