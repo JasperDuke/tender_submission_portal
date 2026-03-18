@@ -115,9 +115,15 @@ const getTenderById = async (req, res, next) => {
     let myProposal = null;
     if (req.user.role === 'vendor') {
       const mine = await Proposal.findOne({ tenderId, vendorId: req.user._id })
-        .select('status remarks score')
+        .select('status remarks score filePath originalFileName')
         .lean();
-      if (mine) myProposal = { status: mine.status, remarks: mine.remarks, score: mine.score };
+      if (mine) myProposal = {
+        status: mine.status,
+        remarks: mine.remarks,
+        score: mine.score,
+        filePath: mine.filePath,
+        originalFileName: mine.originalFileName,
+      };
     }
 
     res.status(200).json({

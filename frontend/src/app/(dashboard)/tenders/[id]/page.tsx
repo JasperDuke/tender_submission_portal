@@ -4,12 +4,12 @@ import React, { useEffect, useState, useCallback } from 'react';
 import {
   Box, Typography, Card, CardContent, Chip, Button, Alert, CircularProgress,
   Divider, TextField, MenuItem, IconButton, Tooltip, Link as MuiLink, Avatar, Tabs, Tab,
-  Drawer, List, ListItem, ListItemText, ListItemIcon,
+  Drawer, List, ListItem, ListItemText, ListItemIcon, Dialog, DialogTitle, DialogContent, DialogActions,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon, CloudUpload as UploadIcon, PictureAsPdf as PdfIcon,
   ChevronRight as ChevronIcon, Email as EmailIcon, Phone as PhoneIcon, Business as BusinessIcon, Person as PersonIcon,
-  Close as CloseIcon,
+  Close as CloseIcon, Edit as EditIcon, Delete as DeleteIcon,
 } from '@mui/icons-material';
 import { useParams, useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/layout/DashboardLayout';
@@ -43,6 +43,8 @@ interface MyProposal {
   status: string;
   remarks?: string;
   score?: number;
+  filePath?: string;
+  originalFileName?: string;
 }
 
 interface Tender {
@@ -53,7 +55,7 @@ interface Tender {
   deadline: string;
   status: 'active' | 'inactive';
   category?: string;
-  createdBy?: { email: string; profile?: { companyName?: string } };
+  createdBy?: { _id?: string; email: string; profile?: { companyName?: string } };
   proposalStats?: ProposalStats;
   myProposal?: MyProposal;
   attachments?: string[];
@@ -76,6 +78,8 @@ export default function TenderDetailPage() {
   const [saving, setSaving] = useState<string | null>(null);
   const [statusTab, setStatusTab] = useState<string>('all');
   const [selectedProposal, setSelectedProposal] = useState<Proposal | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const STATUS_TABS = [
     { value: 'all', labelKey: 'proposals.statusAll' },
@@ -156,6 +160,23 @@ export default function TenderDetailPage() {
     return `${process.env.NEXT_PUBLIC_API_URL}/uploads/${filename}`;
   };
 
+  const canEditDelete =
+    user?.role === 'admin' ||
+    (user?.role === 'companyUser' && tender.createdBy?._id === (user as { _id?: string })?._id);
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    setError('');
+    try {
+      await apiClient.delete(`/tenders/${id}`);
+      router.push('/tenders');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : t('tenders.deleteFailed'));
+      setDeleting(false);
+      setDeleteDialogOpen(false);
+    }
+  };
+
   const getAttachmentFilename = (path: string) => path.replace(/\\/g, '/').split('/').pop() || 'document.pdf';
 
   if (loading) {
@@ -171,12 +192,26 @@ export default function TenderDetailPage() {
   return (
     <DashboardLayout>
       <Box maxWidth={900} mx="auto">
-        <Button startIcon={<BackIcon />} onClick={() => router.push('/tenders')} sx={{ mb: 2.5 }}>
-          {t('tenders.backToTenders')}
-        </Button>
-
-        {error && <Alert severity="error" sx={{ mb: 2.5 }} onClose={() => setError('')}>{error}</Alert>}
-        {uploadSuccess && <Alert severity="success" sx={{ mb: 2.5 }} onClose={() => setUploadSuccess('')}>{uploadSuccess}</Alert>}
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, mb: 1.5, flexWrap: 'wrap' }}>
+          <Tooltip title={t('tenders.backToTenders')} arrow placement="bottom">
+            <IconButton
+              onClick={() => router.push('/tenders')}
+              size="small"
+              sx={{
+                color: 'text.secondary',
+                '&:hover': { color: 'primary.main', bgcolor: 'action.hover' },
+                ml: -0.5,
+                alignSelf: 'center',
+              }}
+            >
+              <BackIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            {error && <Alert severity="error" sx={{ mb: 1, py: 0.75 }} onClose={() => setError('')}>{error}</Alert>}
+            {uploadSuccess && <Alert severity="success" sx={{ py: 0.75 }} onClose={() => setUploadSuccess('')}>{uploadSuccess}</Alert>}
+          </Box>
+        </Box>
 
         {/* ── Tender header ── */}
         <Card elevation={0} sx={{ mb: 3 }}>
@@ -220,9 +255,60 @@ export default function TenderDetailPage() {
               )}
             </Box>
 
-            <Typography variant="h3" fontWeight={800} letterSpacing="-0.02em" gutterBottom>
-              {tender.title}
-            </Typography>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2, flexWrap: 'wrap', mb: 1 }}>
+              <Typography variant="h3" fontWeight={800} letterSpacing="-0.02em" sx={{ flex: 1, minWidth: 0 }}>
+                {tender.title}
+              </Typography>
+              {canEditDelete && (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    gap: 0.5,
+                    flexShrink: 0,
+                    bgcolor: 'action.hover',
+                    borderRadius: 2,
+                    p: 0.5,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                  }}
+                >
+                  <Tooltip title={t('tenders.editTender')} arrow placement="bottom">
+                    <IconButton
+                      onClick={() => router.push(`/tenders/${id}/edit`)}
+                      size="small"
+                      sx={{
+                        color: 'primary.main',
+                        '&:hover': {
+                          bgcolor: 'primary.main',
+                          color: 'primary.contrastText',
+                          boxShadow: '0 2px 8px rgba(37, 99, 235, 0.25)',
+                        },
+                        transition: 'all 0.2s ease',
+                      }}
+                    >
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title={t('tenders.deleteTender')} arrow placement="bottom">
+                    <IconButton
+                      onClick={() => setDeleteDialogOpen(true)}
+                      size="small"
+                      sx={{
+                        color: 'error.main',
+                        '&:hover': {
+                          bgcolor: 'error.main',
+                          color: 'error.contrastText',
+                          boxShadow: '0 2px 8px rgba(211, 47, 47, 0.25)',
+                        },
+                        transition: 'all 0.2s ease',
+                      }}
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              )}
+            </Box>
             <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.7 }}>
               {tender.description}
             </Typography>
@@ -306,8 +392,56 @@ export default function TenderDetailPage() {
           </Alert>
         )}
 
-        {/* ── VENDOR: Upload form ── */}
-        {user?.role === 'vendor' && (
+        {/* ── VENDOR: Already submitted – show submission info (no upload form) ── */}
+        {user?.role === 'vendor' && tender.myProposal && (
+          <Card elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
+            <CardContent sx={{ p: { xs: 2.5, sm: 3.5 } }}>
+              <Typography variant="h6" fontWeight={700} letterSpacing="-0.01em" gutterBottom>
+                {t('proposals.yourSubmission')}
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                <Chip
+                  label={
+                    tender.myProposal.status === 'Accepted'
+                      ? t('proposals.youWereAccepted')
+                      : tender.myProposal.status === 'Rejected'
+                        ? t('proposals.notAccepted')
+                        : t('proposals.yourStatus', { status: tender.myProposal.status })
+                  }
+                  size="small"
+                  color={
+                    tender.myProposal.status === 'Accepted'
+                      ? 'success'
+                      : tender.myProposal.status === 'Rejected'
+                        ? 'error'
+                        : 'default'
+                  }
+                  sx={{ fontWeight: 600 }}
+                />
+              </Box>
+              {tender.myProposal.filePath && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+                  <Typography variant="body2" color="text.secondary">{t('proposals.uploadedFile')}:</Typography>
+                  <Button
+                    component={MuiLink}
+                    href={getPdfUrl(tender.myProposal.filePath)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    variant="outlined"
+                    size="small"
+                    startIcon={<PdfIcon />}
+                    sx={{ textTransform: 'none' }}
+                  >
+                    {tender.myProposal.originalFileName || tender.myProposal.filePath.replace(/\\/g, '/').split('/').pop() || 'proposal.pdf'}
+                  </Button>
+                </Box>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* ── VENDOR: Upload form (only when NOT already applied) ── */}
+        {user?.role === 'vendor' && !tender.myProposal && (
           <Card elevation={0}>
             <CardContent sx={{ p: { xs: 2.5, sm: 3.5 } }}>
               <Typography variant="h6" fontWeight={700} letterSpacing="-0.01em" gutterBottom>
@@ -613,6 +747,80 @@ export default function TenderDetailPage() {
             );
           })()}
         </Drawer>
+
+        <Dialog
+          open={deleteDialogOpen}
+          onClose={() => !deleting && setDeleteDialogOpen(false)}
+          PaperProps={{
+            sx: {
+              borderRadius: 3,
+              boxShadow: '0 24px 48px rgba(0,0,0,0.12)',
+              overflow: 'hidden',
+            },
+          }}
+        >
+          <DialogTitle
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.5,
+              fontWeight: 700,
+              fontSize: '1.25rem',
+              pt: 3,
+              px: 3,
+              pb: 1,
+            }}
+          >
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: 2,
+                bgcolor: 'error.light',
+                color: 'error.main',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <DeleteIcon fontSize="small" />
+            </Box>
+            {t('tenders.deleteConfirmTitle')}
+          </DialogTitle>
+          <DialogContent sx={{ px: 3, py: 2 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.7 }}>
+              {t('tenders.deleteConfirmMessage')}
+            </Typography>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 3, pt: 1, gap: 1.5 }}>
+            <Button
+              variant="text"
+              onClick={() => setDeleteDialogOpen(false)}
+              disabled={deleting}
+              sx={{ color: 'text.secondary', fontWeight: 500 }}
+            >
+              {t('common.cancel')}
+            </Button>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={handleDelete}
+              disabled={deleting}
+              startIcon={deleting ? <CircularProgress size={16} color="inherit" /> : <DeleteIcon />}
+              sx={{
+                fontWeight: 600,
+                px: 2.5,
+                py: 1,
+                borderRadius: 2,
+                textTransform: 'none',
+                boxShadow: '0 4px 14px rgba(211, 47, 47, 0.25)',
+                '&:hover': { boxShadow: '0 6px 20px rgba(211, 47, 47, 0.35)' },
+              }}
+            >
+              {deleting ? t('tenders.deleting') : t('tenders.deleteTender')}
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     </DashboardLayout>
   );

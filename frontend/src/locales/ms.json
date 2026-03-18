@@ -44,7 +44,7 @@
     }
   },
   "footer": {
-    "copyright": "© 2025 DemoSourcing"
+    "copyright": "© 2025 Portal Penyerahan Tender"
   },
   "language": {
     "en": "English",
@@ -214,7 +214,13 @@
     "filesSelectedPlural": "{{count}} fail dipilih",
     "publishTender": "Terbitkan Tender",
     "publishFailed": "Gagal menerbitkan tender.",
-    "accessDenied": "Akses ditolak."
+    "accessDenied": "Akses ditolak.",
+    "editTender": "Edit Tender",
+    "deleteTender": "Padam Tender",
+    "deleteConfirmTitle": "Padam Tender?",
+    "deleteConfirmMessage": "Tender ini dan semua penyerahan berkaitan akan dipadam kekal. Tindakan ini tidak boleh dibatalkan.",
+    "deleting": "Memadam...",
+    "deleteFailed": "Gagal memadam tender."
   },
   "proposals": {
     "title": "Penyerahan Saya",
@@ -279,7 +285,10 @@
     "withdrawSubmission": "Tarik balik penyerahan",
     "withdrawTitle": "Tarik Balik Penyerahan?",
     "withdrawConfirm": "Tindakan ini tidak boleh dibatalkan. Dokumen anda akan dipadam secara kekal dari sistem.",
-    "withdraw": "Tarik Balik"
+    "withdraw": "Tarik Balik",
+    "yourSubmission": "Penyerahan Anda",
+    "uploadedFile": "Fail Dimuat naik",
+    "viewUploadedFile": "Lihat fail dimuat naik"
   },
   "integration": {
     "title": "Integrasi",

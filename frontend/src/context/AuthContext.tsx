@@ -96,13 +96,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(newUser);
   }, []);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    if (user && token && ['companyUser', 'admin'].includes(user.role)) {
+      try {
+        await apiClient.post('/auth/logout');
+      } catch {
+        // Ignore; clear local state regardless
+      }
+    }
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     delete apiClient.defaults.headers.common['Authorization'];
     setToken(null);
     setUser(null);
-  }, []);
+  }, [user, token]);
 
   const refreshUser = useCallback(async () => {
     const t = localStorage.getItem(TOKEN_KEY);

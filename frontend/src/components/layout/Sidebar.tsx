@@ -323,8 +323,14 @@ export default function Sidebar({
         <Typography
           variant="caption"
           color="text.disabled"
-          display="block"
-          textAlign="center"
+          sx={{
+            display: "block",
+            textAlign: "center",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            "@media (max-width: 280px)": { display: "none" },
+          }}
         >
           {t("footer.copyright")} · v1.0.0
         </Typography>

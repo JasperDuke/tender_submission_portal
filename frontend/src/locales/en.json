@@ -44,7 +44,7 @@
     }
   },
   "footer": {
-    "copyright": "© 2025 DemoSourcing"
+    "copyright": "© 2025 Tender Submission Portal"
   },
   "language": {
     "en": "En",
@@ -214,7 +214,13 @@
     "filesSelectedPlural": "{{count}} files selected",
     "publishTender": "Publish Tender",
     "publishFailed": "Failed to publish tender.",
-    "accessDenied": "Access denied."
+    "accessDenied": "Access denied.",
+    "editTender": "Edit Tender",
+    "deleteTender": "Delete Tender",
+    "deleteConfirmTitle": "Delete Tender?",
+    "deleteConfirmMessage": "This tender and all associated submissions will be permanently deleted. This action cannot be undone.",
+    "deleting": "Deleting...",
+    "deleteFailed": "Failed to delete tender."
   },
   "proposals": {
     "title": "My Submissions",
@@ -279,7 +285,10 @@
     "withdrawSubmission": "Withdraw submission",
     "withdrawTitle": "Withdraw Submission?",
     "withdrawConfirm": "This action cannot be undone. Your uploaded document will be permanently removed from the system.",
-    "withdraw": "Withdraw"
+    "withdraw": "Withdraw",
+    "yourSubmission": "Your Submission",
+    "uploadedFile": "Uploaded File",
+    "viewUploadedFile": "View uploaded file"
   },
   "integration": {
     "title": "Integration",
