@@ -161,8 +161,9 @@ export default function TenderDetailPage() {
   };
 
   const canEditDelete =
-    user?.role === 'admin' ||
-    (user?.role === 'companyUser' && tender.createdBy?._id === (user as { _id?: string })?._id);
+    tender != null &&
+    (user?.role === 'admin' ||
+      (user?.role === 'companyUser' && tender.createdBy?._id === (user as { _id?: string })?._id));
 
   const handleDelete = async () => {
     setDeleting(true);
