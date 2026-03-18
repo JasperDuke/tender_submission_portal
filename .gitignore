@@ -1,0 +1,87 @@
+# ── Dependencies ─────────────────────────────────────────────────────────────
+backend/node_modules/
+frontend/node_modules/
+backend/.pnp
+backend/.pnp.js
+backend/.yarn/cache
+backend/.yarn/unplugged
+backend/.npm
+frontend/.pnp
+frontend/.pnp.js
+frontend/.yarn/cache
+frontend/.yarn/unplugged
+frontend/.npm
+
+# ── Build outputs ───────────────────────────────────────────────────────────
+frontend/.next/
+frontend/out/
+frontend/dist/
+frontend/build/
+frontend/*.tsbuildinfo
+
+# ── Environment variables (keep .env.example for reference) ───────────────────
+backend/.env
+backend/.env.local
+backend/.env.*.local
+backend/.env.development
+backend/.env.test
+backend/.env.production
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+frontend/.env.development
+frontend/.env.test
+frontend/.env.production
+!backend/.env.example
+!backend/.env*.example
+!frontend/.env.example
+!frontend/.env*.example
+
+# ── Monorepo / Tooling ──────────────────────────────────────────────────────
+backend/.turbo/
+backend/.vercel/
+backend/coverage/
+backend/*.lcov
+frontend/.turbo/
+frontend/.vercel/
+frontend/coverage/
+frontend/*.lcov
+
+# ── Uploads (user-uploaded files) ───────────────────────────────────────────
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# ── Logs & Debug ───────────────────────────────────────────────────────────
+backend/logs/
+backend/*.log
+backend/npm-debug.log*
+backend/yarn-debug.log*
+backend/yarn-error.log*
+backend/pnpm-debug.log*
+frontend/logs/
+frontend/*.log
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+
+# ── OS files ────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ── IDEs & Editors ──────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ── TypeScript / Next.js ────────────────────────────────────────────────────
+frontend/next-env.d.ts
+
+# ── Misc ────────────────────────────────────────────────────────────────────
+*.pem
+.cache/
