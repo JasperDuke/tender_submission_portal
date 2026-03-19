@@ -47,7 +47,7 @@ export default function Topbar({ drawerWidth, onMenuToggle }: TopbarProps) {
   const handleLogout = async () => {
     handleMenuClose();
     await logout();
-    router.push("/login");
+    window.location.href = "/login";
   };
 
   const displayName =
