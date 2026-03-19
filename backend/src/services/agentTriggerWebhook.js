@@ -40,21 +40,19 @@ async function triggerAgentOnProposalSubmit({
 
   const payload = {
     event_id: eventId,
-    payload: {
-      tenderId: String(tenderId),
-      vendor: {
-        id: vendor?._id?.toString(),
-        email: vendor?.email,
-        companyName: vendor?.profile?.companyName,
-        contactPerson: vendor?.profile?.contactPerson,
-        phone: vendor?.profile?.phone,
-        address: vendor?.profile?.address,
-        companyDescription: vendor?.profile?.companyDescription,
-      },
-      attachments,
-      message:
-        "What is this file about? Please analyze the data and provide a detailed report of this vendor proposal.",
+    tenderId: String(tenderId),
+    vendor: {
+      id: vendor?._id?.toString(),
+      email: vendor?.email,
+      companyName: vendor?.profile?.companyName,
+      contactPerson: vendor?.profile?.contactPerson,
+      phone: vendor?.profile?.phone,
+      address: vendor?.profile?.address,
+      companyDescription: vendor?.profile?.companyDescription,
     },
+    attachments,
+    message:
+      "What is this file about? Please analyze the data and provide a detailed report of this vendor proposal.",
   };
 
   try {
