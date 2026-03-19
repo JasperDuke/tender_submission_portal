@@ -220,7 +220,9 @@
     "deleteConfirmTitle": "Padam Tender?",
     "deleteConfirmMessage": "Tender ini dan semua penyerahan berkaitan akan dipadam kekal. Tindakan ini tidak boleh dibatalkan.",
     "deleting": "Memadam...",
-    "deleteFailed": "Gagal memadam tender."
+    "deleteFailed": "Gagal memadam tender.",
+    "activeProposalsWarningTitle": "Amaran: Cadangan Aktif",
+    "activeProposalsWarningMessage": "Terdapat {{count}} cadangan yang diserahkan untuk tender ini. Adakah anda pasti ingin memadam tender ini?"
   },
   "proposals": {
     "title": "Penyerahan Saya",
@@ -288,7 +290,8 @@
     "withdraw": "Tarik Balik",
     "yourSubmission": "Penyerahan Anda",
     "uploadedFile": "Fail Dimuat naik",
-    "viewUploadedFile": "Lihat fail dimuat naik"
+    "viewUploadedFile": "Lihat fail dimuat naik",
+    "deletedTender": "Tender Dipadam"
   },
   "integration": {
     "title": "Integrasi",
