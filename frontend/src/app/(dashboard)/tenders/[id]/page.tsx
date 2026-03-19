@@ -792,6 +792,19 @@ export default function TenderDetailPage() {
             <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.7 }}>
               {t('tenders.deleteConfirmMessage')}
             </Typography>
+            {proposals && proposals.length > 0 && (
+              <Alert severity="warning" sx={{ mt: 2, '& .MuiAlert-message': { width: '100%' } }}>
+                <Typography variant="subtitle2" fontWeight={700} gutterBottom>
+                  {t('tenders.activeProposalsWarningTitle', { defaultValue: 'Warning: Active Proposals' })}
+                </Typography>
+                <Typography variant="body2">
+                  {t('tenders.activeProposalsWarningMessage', {
+                    defaultValue: `There are ${proposals.length} submitted proposal(s) for this tender. Are you sure you want to delete this one?`,
+                    count: proposals.length
+                  })}
+                </Typography>
+              </Alert>
+            )}
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 3, pt: 1, gap: 1.5 }}>
             <Button

@@ -11,8 +11,12 @@ const apiClient = axios.create({
 // ── Request interceptor ───────────────────────────────────────────────────────
 apiClient.interceptors.request.use(
   (config) => {
-    // Token is injected at login (AuthContext) via defaults.headers.common;
-    // individual requests can override via Authorization header.
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('ds_token');
+      if (token && config.headers) {
+        config.headers['Authorization'] = `Bearer ${token}`;
+      }
+    }
     return config;
   },
   (error) => Promise.reject(error)

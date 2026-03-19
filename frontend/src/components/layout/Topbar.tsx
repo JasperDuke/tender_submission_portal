@@ -44,9 +44,9 @@ export default function Topbar({ drawerWidth, onMenuToggle }: TopbarProps) {
     setAnchorEl(e.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     handleMenuClose();
-    logout();
+    await logout();
     router.push("/login");
   };
 

@@ -160,18 +160,18 @@ export default function MyProposalsPage() {
                         <Typography
                           variant="body2"
                           fontWeight={600}
-                          color="primary.main"
-                          sx={{ cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
-                          onClick={() => router.push(`/tenders/${p.tenderId._id}`)}
+                          color={p.tenderId ? "primary.main" : "text.disabled"}
+                          sx={p.tenderId ? { cursor: 'pointer', '&:hover': { textDecoration: 'underline' } } : {}}
+                          onClick={() => p.tenderId && router.push(`/tenders/${p.tenderId._id}`)}
                         >
-                          {p.tenderId.title}
+                          {p.tenderId?.title || t('proposals.deletedTender', { defaultValue: 'Deleted Tender' })}
                         </Typography>
                       </TableCell>
                       <TableCell>
                         <Typography variant="caption" color="text.secondary">
-                          {new Date(p.tenderId.deadline).toLocaleDateString('en-MY', {
+                          {p.tenderId?.deadline ? new Date(p.tenderId.deadline).toLocaleDateString('en-MY', {
                             day: 'numeric', month: 'short', year: 'numeric',
-                          })}
+                          }) : '—'}
                         </Typography>
                       </TableCell>
                       <TableCell>
@@ -218,8 +218,8 @@ export default function MyProposalsPage() {
                             <IconButton
                               size="small"
                               color="primary"
-                              disabled={isEvaluated}
-                              onClick={() => router.push(`/tenders/${p.tenderId._id}`)}
+                              disabled={isEvaluated || !p.tenderId}
+                              onClick={() => p.tenderId && router.push(`/tenders/${p.tenderId._id}`)}
                             >
                               <EditIcon fontSize="small" />
                             </IconButton>

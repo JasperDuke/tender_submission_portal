@@ -1,11 +1,18 @@
-'use client';
+"use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import apiClient from '@/lib/apiClient';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  ReactNode,
+} from "react";
+import apiClient from "@/lib/apiClient";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-export type UserRole = 'admin' | 'companyUser' | 'vendor';
+export type UserRole = "admin" | "companyUser" | "vendor";
 
 export interface UserProfile {
   displayName?: string;
@@ -31,7 +38,11 @@ interface AuthContextValue {
   token: string | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, profile?: UserProfile) => Promise<void>;
+  register: (
+    email: string,
+    password: string,
+    profile?: UserProfile,
+  ) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 }
@@ -40,8 +51,8 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-const TOKEN_KEY = 'ds_token';
-const USER_KEY = 'ds_user';
+const TOKEN_KEY = "ds_token";
+const USER_KEY = "ds_user";
 
 // ── Provider ─────────────────────────────────────────────────────────────────
 
@@ -60,7 +71,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setToken(storedToken);
         setUser(JSON.parse(storedUser));
         // Set default header immediately so API calls work on page reload
-        apiClient.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+        apiClient.defaults.headers.common["Authorization"] =
+          `Bearer ${storedToken}`;
       } catch {
         localStorage.removeItem(TOKEN_KEY);
         localStorage.removeItem(USER_KEY);
@@ -71,42 +83,49 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
-    const { data } = await apiClient.post('/auth/login', { email, password });
+    const { data } = await apiClient.post("/auth/login", { email, password });
     const { token: newToken, user: newUser } = data;
 
     localStorage.setItem(TOKEN_KEY, newToken);
     localStorage.setItem(USER_KEY, JSON.stringify(newUser));
 
-    apiClient.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+    apiClient.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
 
     setToken(newToken);
     setUser(newUser);
   }, []);
 
-  const register = useCallback(async (email: string, password: string, profile?: UserProfile) => {
-    const { data } = await apiClient.post('/auth/register', { email, password, profile });
-    const { token: newToken, user: newUser } = data;
+  const register = useCallback(
+    async (email: string, password: string, profile?: UserProfile) => {
+      const { data } = await apiClient.post("/auth/register", {
+        email,
+        password,
+        profile,
+      });
+      const { token: newToken, user: newUser } = data;
 
-    localStorage.setItem(TOKEN_KEY, newToken);
-    localStorage.setItem(USER_KEY, JSON.stringify(newUser));
+      localStorage.setItem(TOKEN_KEY, newToken);
+      localStorage.setItem(USER_KEY, JSON.stringify(newUser));
 
-    apiClient.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+      apiClient.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
 
-    setToken(newToken);
-    setUser(newUser);
-  }, []);
+      setToken(newToken);
+      setUser(newUser);
+    },
+    [],
+  );
 
   const logout = useCallback(async () => {
-    if (user && token && ['companyUser', 'admin'].includes(user.role)) {
+    if (user && token && ["companyUser"].includes(user.role)) {
       try {
-        await apiClient.post('/auth/logout');
+        await apiClient.post("/auth/logout");
       } catch {
         // Ignore; clear local state regardless
       }
     }
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
-    delete apiClient.defaults.headers.common['Authorization'];
+    delete apiClient.defaults.headers.common["Authorization"];
     setToken(null);
     setUser(null);
   }, [user, token]);
@@ -114,14 +133,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const refreshUser = useCallback(async () => {
     const t = localStorage.getItem(TOKEN_KEY);
     if (!t) return;
-    const { data } = await apiClient.get('/auth/me');
+    const { data } = await apiClient.get("/auth/me");
     const newUser = data.user;
     localStorage.setItem(USER_KEY, JSON.stringify(newUser));
     setUser(newUser);
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, register, logout, refreshUser }}>
+    <AuthContext.Provider
+      value={{ user, token, isLoading, login, register, logout, refreshUser }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -131,7 +152,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
 export const useAuth = (): AuthContextValue => {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used within an AuthProvider');
+  if (!ctx) throw new Error("useAuth must be used within an AuthProvider");
   return ctx;
 };
 
