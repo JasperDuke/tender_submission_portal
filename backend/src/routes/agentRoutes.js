@@ -7,6 +7,7 @@ const {
   getMyTenders,
   getMyTenderById,
   getVendorsByTenderId,
+  updateVendorStatus,
 } = require('../controllers/agentController');
 
 router.use(protect);
@@ -16,5 +17,6 @@ router.post('/whoami', whoAmI);
 router.post('/tenders', getMyTenders);
 router.post('/tender', getMyTenderById);
 router.post('/vendors', getVendorsByTenderId);
+router.post('/vendor/status', updateVendorStatus);
 
 module.exports = router;
