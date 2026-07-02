@@ -1,5 +1,6 @@
 const Tender = require('../models/Tender');
 const Proposal = require('../models/Proposal');
+const { triggerAgentOnTenderCreate } = require('../services/agentTriggerWebhook');
 
 /**
  * GET /api/tenders
@@ -153,6 +154,10 @@ const createTender = async (req, res, next) => {
       category,
       attachments: attachmentPaths,
       createdBy: req.user._id,
+    });
+
+    triggerAgentOnTenderCreate({ tender }).catch((err) => {
+      console.error('[webhook] Tender create trigger failed (tender still saved):', err.message);
     });
 
     res.status(201).json({ success: true, tender });

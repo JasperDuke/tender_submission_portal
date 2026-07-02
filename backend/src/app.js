@@ -32,11 +32,21 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ── Static uploads ─────────────────────────────────────────────────────────────
+// ── Static uploads (public, no auth) ───────────────────────────────────────────
 app.use(
   "/uploads",
+  (_req, res, next) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+    next();
+  },
   express.static(
     path.join(__dirname, "..", process.env.UPLOAD_DIR || "uploads"),
+    {
+      setHeaders: (res) => {
+        res.setHeader("Cache-Control", "public, max-age=3600");
+      },
+    },
   ),
 );
 
