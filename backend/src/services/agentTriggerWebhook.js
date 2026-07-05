@@ -2,6 +2,7 @@ const axios = require("axios");
 const path = require("path");
 const crypto = require("crypto");
 const TriggerConfig = require("../models/TriggerConfig");
+const User = require("../models/User");
 
 const TRIGGER_TYPE_PROPOSAL = "proposal";
 const TRIGGER_TYPE_TENDER = "tender";
@@ -61,8 +62,7 @@ async function sendWebhook({ config, payload, label }) {
   const attachments = Array.isArray(payload.attachments)
     ? payload.attachments
     : [];
-  console.log("payload", payload);
-  console.log("config", config);
+
   console.log(`[webhook] calling ${label}`, {
     event_id: payload.event_id,
     tenderId: payload.tenderId,
@@ -148,6 +148,11 @@ async function triggerAgentOnTenderCreate({ tender }) {
     return;
   }
 
+  const creatorId = tender.createdBy?._id || tender.createdBy;
+  const createdBy = creatorId
+    ? await User.findById(creatorId).select("email role profile").lean()
+    : null;
+
   const eventId = `tender_create_event_${crypto.randomUUID()}`;
   const attachments = resolveAttachments(
     tender?.attachments || [],
@@ -166,7 +171,14 @@ async function triggerAgentOnTenderCreate({ tender }) {
       : null,
     description: tender.description,
     requirements: tender.requirements,
-    attachments: attachments,
+    attachments,
+    companyUserId: createdBy?._id?.toString(),
+    companyUserEmail: createdBy?.email,
+    companyName: createdBy?.profile?.companyName,
+    companyContactPerson: createdBy?.profile?.contactPerson,
+    companyPhone: createdBy?.profile?.phone,
+    companyAddress: createdBy?.profile?.address,
+    companyDescription: createdBy?.profile?.companyDescription,
     message:
       "A new tender has been published. Please review the tender details and attached documents.",
   };
