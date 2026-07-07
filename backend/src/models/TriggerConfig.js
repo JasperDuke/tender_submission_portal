@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const TRIGGER_TYPES = ['proposal', 'tender'];
+const TRIGGER_TYPES = ['proposal', 'tender', 'awarded'];
 
 const triggerConfigSchema = new mongoose.Schema(
   {

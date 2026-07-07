@@ -2,6 +2,9 @@ const TriggerConfig = require('../models/TriggerConfig');
 
 const TRIGGER_TYPE_PROPOSAL = 'proposal';
 const TRIGGER_TYPE_TENDER = 'tender';
+const TRIGGER_TYPE_AWARDED = 'awarded';
+
+const VALID_TYPES = [TRIGGER_TYPE_PROPOSAL, TRIGGER_TYPE_TENDER, TRIGGER_TYPE_AWARDED];
 
 async function findConfigByType(type) {
   let config = await TriggerConfig.findOne({ type });
@@ -13,19 +16,21 @@ async function findConfigByType(type) {
 
 /**
  * GET /api/integration/trigger
- * Returns proposal and tender trigger configs (admin only).
+ * Returns proposal, tender, and awarded trigger configs (admin only).
  */
 const getTriggerConfig = async (req, res, next) => {
   try {
-    const [proposalConfig, tenderConfig] = await Promise.all([
+    const [proposalConfig, tenderConfig, awardedConfig] = await Promise.all([
       findConfigByType(TRIGGER_TYPE_PROPOSAL),
       findConfigByType(TRIGGER_TYPE_TENDER),
+      findConfigByType(TRIGGER_TYPE_AWARDED),
     ]);
 
     res.status(200).json({
       success: true,
       triggerConfig: proposalConfig || null,
       tenderTriggerConfig: tenderConfig || null,
+      awardedTriggerConfig: awardedConfig || null,
     });
   } catch (err) {
     next(err);
@@ -34,17 +39,16 @@ const getTriggerConfig = async (req, res, next) => {
 
 /**
  * POST /api/integration/trigger
- * Body: { apiUrl, triggerToken, apiPublicUrl?, type?: 'proposal'|'tender' }
- * Upsert one config per type. Defaults to proposal for backward compatibility.
+ * Body: { apiUrl, triggerToken, apiPublicUrl?, type?: 'proposal'|'tender'|'awarded' }
  */
 const upsertTriggerConfig = async (req, res, next) => {
   try {
     const { apiUrl, triggerToken, apiPublicUrl, type = TRIGGER_TYPE_PROPOSAL } = req.body;
 
-    if (![TRIGGER_TYPE_PROPOSAL, TRIGGER_TYPE_TENDER].includes(type)) {
+    if (!VALID_TYPES.includes(type)) {
       return res.status(400).json({
         success: false,
-        message: 'type must be proposal or tender',
+        message: 'type must be proposal, tender, or awarded',
       });
     }
 
@@ -56,7 +60,6 @@ const upsertTriggerConfig = async (req, res, next) => {
     }
 
     await TriggerConfig.deleteMany({ type });
-    // Remove legacy proposal doc without type field when upserting proposal
     if (type === TRIGGER_TYPE_PROPOSAL) {
       await TriggerConfig.deleteMany({ type: { $exists: false } });
     }
@@ -72,6 +75,7 @@ const upsertTriggerConfig = async (req, res, next) => {
       success: true,
       triggerConfig: type === TRIGGER_TYPE_PROPOSAL ? config : undefined,
       tenderTriggerConfig: type === TRIGGER_TYPE_TENDER ? config : undefined,
+      awardedTriggerConfig: type === TRIGGER_TYPE_AWARDED ? config : undefined,
       config,
     });
   } catch (err) {
@@ -80,24 +84,23 @@ const upsertTriggerConfig = async (req, res, next) => {
 };
 
 /**
- * DELETE /api/integration/trigger?type=proposal|tender
- * Remove trigger config for the given type (defaults to proposal).
+ * DELETE /api/integration/trigger?type=proposal|tender|awarded
  */
 const removeTriggerConfig = async (req, res, next) => {
   try {
     const type = req.query.type || TRIGGER_TYPE_PROPOSAL;
 
-    if (![TRIGGER_TYPE_PROPOSAL, TRIGGER_TYPE_TENDER].includes(type)) {
+    if (!VALID_TYPES.includes(type)) {
       return res.status(400).json({
         success: false,
-        message: 'type must be proposal or tender',
+        message: 'type must be proposal, tender, or awarded',
       });
     }
 
     const filter =
       type === TRIGGER_TYPE_PROPOSAL
         ? { $or: [{ type: TRIGGER_TYPE_PROPOSAL }, { type: { $exists: false } }] }
-        : { type: TRIGGER_TYPE_TENDER };
+        : { type };
 
     const result = await TriggerConfig.deleteMany(filter);
     res.status(200).json({

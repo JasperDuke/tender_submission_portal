@@ -43,6 +43,71 @@ interface TriggerConfig {
   apiPublicUrl?: string;
 }
 
+type TriggerKind = "proposal" | "tender" | "awarded";
+
+const TRIGGER_SECTIONS: {
+  kind: TriggerKind;
+  titleKey: string;
+  descKey: string;
+  addSuccessKey: string;
+  showPublicUrl: boolean;
+}[] = [
+  {
+    kind: "proposal",
+    titleKey: "integration.proposalTrigger",
+    descKey: "integration.proposalTriggerDesc",
+    addSuccessKey: "integration.proposalTriggerAddSuccess",
+    showPublicUrl: true,
+  },
+  {
+    kind: "tender",
+    titleKey: "integration.tenderTrigger",
+    descKey: "integration.tenderTriggerDesc",
+    addSuccessKey: "integration.tenderTriggerAddSuccess",
+    showPublicUrl: true,
+  },
+  {
+    kind: "awarded",
+    titleKey: "integration.awardedTrigger",
+    descKey: "integration.awardedTriggerDesc",
+    addSuccessKey: "integration.awardedTriggerAddSuccess",
+    showPublicUrl: false,
+  },
+];
+
+function TriggerValueBlock({
+  label,
+  value,
+  isDark,
+}: {
+  label: string;
+  value: string;
+  isDark: boolean;
+}) {
+  return (
+    <Box sx={{ mb: 2 }}>
+      <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+        {label}
+      </Typography>
+      <Box
+        component="pre"
+        sx={{
+          p: 2,
+          borderRadius: 1,
+          bgcolor: isDark ? "rgba(0,0,0,0.3)" : "rgba(0,0,0,0.05)",
+          overflow: "auto",
+          fontSize: "0.75rem",
+          fontFamily: "monospace",
+          wordBreak: "break-all",
+          m: 0,
+        }}
+      >
+        {value}
+      </Box>
+    </Box>
+  );
+}
+
 const WIDGET_TAB_TYPES = [
   {
     value: "admin",
@@ -102,20 +167,27 @@ export default function IntegrationPage() {
   const [token, setToken] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const [triggerConfig, setTriggerConfig] = useState<TriggerConfig | null>(
-    null,
-  );
-  const [tenderTriggerConfig, setTenderTriggerConfig] =
-    useState<TriggerConfig | null>(null);
-  const [triggerApiUrl, setTriggerApiUrl] = useState("");
-  const [triggerToken, setTriggerToken] = useState("");
-  const [triggerApiPublicUrl, setTriggerApiPublicUrl] = useState("");
-  const [tenderTriggerApiUrl, setTenderTriggerApiUrl] = useState("");
-  const [tenderTriggerToken, setTenderTriggerToken] = useState("");
-  const [tenderTriggerApiPublicUrl, setTenderTriggerApiPublicUrl] =
-    useState("");
-  const [triggerSubmitting, setTriggerSubmitting] = useState(false);
-  const [tenderTriggerSubmitting, setTenderTriggerSubmitting] = useState(false);
+  const [triggerConfigs, setTriggerConfigs] = useState<
+    Record<TriggerKind, TriggerConfig | null>
+  >({
+    proposal: null,
+    tender: null,
+    awarded: null,
+  });
+  const [triggerForms, setTriggerForms] = useState<
+    Record<TriggerKind, { apiUrl: string; token: string; apiPublicUrl: string }>
+  >({
+    proposal: { apiUrl: "", token: "", apiPublicUrl: "" },
+    tender: { apiUrl: "", token: "", apiPublicUrl: "" },
+    awarded: { apiUrl: "", token: "", apiPublicUrl: "" },
+  });
+  const [triggerSubmitting, setTriggerSubmitting] = useState<
+    Record<TriggerKind, boolean>
+  >({
+    proposal: false,
+    tender: false,
+    awarded: false,
+  });
 
   const canManage = user?.role === "admin";
 
@@ -138,10 +210,13 @@ export default function IntegrationPage() {
     if (!canManage) return;
     try {
       const { data } = await apiClient.get("/integration/trigger");
-      setTriggerConfig(data.triggerConfig || null);
-      setTenderTriggerConfig(data.tenderTriggerConfig || null);
+      setTriggerConfigs({
+        proposal: data.triggerConfig || null,
+        tender: data.tenderTriggerConfig || null,
+        awarded: data.awardedTriggerConfig || null,
+      });
     } catch {
-      setTriggerConfig(null);
+      setTriggerConfigs({ proposal: null, tender: null, awarded: null });
     }
   }, [canManage]);
 
@@ -178,58 +253,41 @@ export default function IntegrationPage() {
     }
   };
 
-  const handleAddTrigger = async (
-    e: React.FormEvent,
-    type: "proposal" | "tender",
-  ) => {
+  const handleAddTrigger = async (e: React.FormEvent, kind: TriggerKind) => {
     e.preventDefault();
     setError("");
     setSuccess("");
-    const isTender = type === "tender";
-    if (isTender) setTenderTriggerSubmitting(true);
-    else setTriggerSubmitting(true);
+    const form = triggerForms[kind];
+    setTriggerSubmitting((prev) => ({ ...prev, [kind]: true }));
     try {
       await apiClient.post("/integration/trigger", {
-        type,
-        apiUrl: (isTender ? tenderTriggerApiUrl : triggerApiUrl).trim(),
-        triggerToken: (isTender ? tenderTriggerToken : triggerToken).trim(),
-        apiPublicUrl:
-          (isTender ? tenderTriggerApiPublicUrl : triggerApiPublicUrl).trim() ||
-          undefined,
+        type: kind,
+        apiUrl: form.apiUrl.trim(),
+        triggerToken: form.token.trim(),
+        apiPublicUrl: form.apiPublicUrl.trim() || undefined,
       });
-      setSuccess(
-        isTender
-          ? t("integration.tenderTriggerAddSuccess")
-          : t("integration.proposalTriggerAddSuccess"),
-      );
-      if (isTender) {
-        setTenderTriggerApiUrl("");
-        setTenderTriggerToken("");
-        setTenderTriggerApiPublicUrl("");
-      } else {
-        setTriggerApiUrl("");
-        setTriggerToken("");
-        setTriggerApiPublicUrl("");
-      }
+      const section = TRIGGER_SECTIONS.find((s) => s.kind === kind);
+      setSuccess(t(section?.addSuccessKey || "integration.triggerAddSuccess"));
+      setTriggerForms((prev) => ({
+        ...prev,
+        [kind]: { apiUrl: "", token: "", apiPublicUrl: "" },
+      }));
       fetchTriggerConfig();
     } catch (err) {
       setError(
         err instanceof Error ? err.message : t("integration.triggerAddFailed"),
       );
     } finally {
-      if (isTender) setTenderTriggerSubmitting(false);
-      else setTriggerSubmitting(false);
+      setTriggerSubmitting((prev) => ({ ...prev, [kind]: false }));
     }
   };
 
-  const handleRemoveTrigger = async (type: "proposal" | "tender") => {
+  const handleRemoveTrigger = async (kind: TriggerKind) => {
     setError("");
     setSuccess("");
-    const isTender = type === "tender";
-    if (isTender) setTenderTriggerSubmitting(true);
-    else setTriggerSubmitting(true);
+    setTriggerSubmitting((prev) => ({ ...prev, [kind]: true }));
     try {
-      await apiClient.delete(`/integration/trigger?type=${type}`);
+      await apiClient.delete(`/integration/trigger?type=${kind}`);
       setSuccess(t("integration.triggerRemoveSuccess"));
       fetchTriggerConfig();
     } catch (err) {
@@ -239,9 +297,19 @@ export default function IntegrationPage() {
           : t("integration.triggerRemoveFailed"),
       );
     } finally {
-      if (isTender) setTenderTriggerSubmitting(false);
-      else setTriggerSubmitting(false);
+      setTriggerSubmitting((prev) => ({ ...prev, [kind]: false }));
     }
+  };
+
+  const updateTriggerForm = (
+    kind: TriggerKind,
+    field: "apiUrl" | "token" | "apiPublicUrl",
+    value: string,
+  ) => {
+    setTriggerForms((prev) => ({
+      ...prev,
+      [kind]: { ...prev[kind], [field]: value },
+    }));
   };
 
   const handleRemove = async (type: string) => {
@@ -351,237 +419,163 @@ export default function IntegrationPage() {
                           {t("integration.triggerDesc")}
                         </Typography>
 
-                        {/* Proposal trigger */}
-                        <Box>
-                          <Typography variant="subtitle1" fontWeight={700} gutterBottom>
-                            {t("integration.proposalTrigger")}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                            {t("integration.proposalTriggerDesc")}
-                          </Typography>
-                          {triggerConfig ? (
-                            <Paper
-                              variant="outlined"
-                              sx={{
-                                p: 2,
-                                borderRadius: 2,
-                                bgcolor: isDark
-                                  ? "rgba(255,255,255,0.02)"
-                                  : "rgba(0,0,0,0.02)",
-                              }}
-                            >
-                              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                                {t("integration.apiUrlLabel")}
+                        {TRIGGER_SECTIONS.map((section) => {
+                          const config = triggerConfigs[section.kind];
+                          const form = triggerForms[section.kind];
+                          const submitting = triggerSubmitting[section.kind];
+                          return (
+                            <Box key={section.kind}>
+                              <Typography variant="subtitle1" fontWeight={700} gutterBottom>
+                                {t(section.titleKey)}
                               </Typography>
-                              <Box
-                                component="pre"
-                                sx={{
-                                  p: 2,
-                                  borderRadius: 1,
-                                  bgcolor: isDark ? "rgba(0,0,0,0.3)" : "rgba(0,0,0,0.05)",
-                                  overflow: "auto",
-                                  fontSize: "0.75rem",
-                                  fontFamily: "monospace",
-                                  wordBreak: "break-all",
-                                }}
-                              >
-                                {triggerConfig.apiUrl}
-                              </Box>
-                              <Button
-                                variant="outlined"
-                                color="error"
-                                startIcon={
-                                  triggerSubmitting ? (
-                                    <CircularProgress size={18} />
-                                  ) : (
-                                    <DeleteIcon />
-                                  )
-                                }
-                                onClick={() => handleRemoveTrigger("proposal")}
-                                disabled={triggerSubmitting || !canManage}
-                                sx={{ mt: 2 }}
-                              >
-                                {t("integration.remove")}
-                              </Button>
-                            </Paper>
-                          ) : (
-                            <Box
-                              component="form"
-                              onSubmit={(e) => handleAddTrigger(e, "proposal")}
-                              sx={{ display: "flex", flexDirection: "column", gap: 2.5, maxWidth: 640 }}
-                            >
-                              <TextField
-                                label={t("integration.apiUrlLabel")}
-                                placeholder={t("integration.apiUrlPlaceholder")}
-                                value={triggerApiUrl}
-                                onChange={(e) => setTriggerApiUrl(e.target.value)}
-                                required
-                                fullWidth
-                                sx={{ "& .MuiInputBase-input": { fontFamily: "monospace", fontSize: "0.85rem" } }}
-                              />
-                              <TextField
-                                label={t("integration.triggerTokenLabel")}
-                                placeholder={t("integration.triggerTokenPlaceholder")}
-                                value={triggerToken}
-                                onChange={(e) => setTriggerToken(e.target.value)}
-                                required
-                                fullWidth
-                                type="password"
-                                autoComplete="off"
-                                sx={{ "& .MuiInputBase-input": { fontFamily: "monospace", fontSize: "0.85rem" } }}
-                              />
-                              <TextField
-                                label={t("integration.apiPublicUrlLabel")}
-                                placeholder={t("integration.apiPublicUrlPlaceholder")}
-                                value={triggerApiPublicUrl}
-                                onChange={(e) => setTriggerApiPublicUrl(e.target.value)}
-                                fullWidth
-                                helperText={t("integration.apiPublicUrlHelper")}
-                                sx={{ "& .MuiInputBase-input": { fontFamily: "monospace", fontSize: "0.85rem" } }}
-                              />
-                              <Button
-                                type="submit"
-                                variant="contained"
-                                startIcon={
-                                  triggerSubmitting ? (
-                                    <CircularProgress size={18} color="inherit" />
-                                  ) : (
-                                    <AddIcon />
-                                  )
-                                }
-                                disabled={
-                                  triggerSubmitting ||
-                                  !canManage ||
-                                  !triggerApiUrl.trim() ||
-                                  !triggerToken.trim()
-                                }
-                                sx={{
-                                  alignSelf: "flex-start",
-                                  background: "linear-gradient(135deg, #2563EB, #7C3AED)",
-                                  "&:hover": { background: "linear-gradient(135deg, #1D4ED8, #6D28D9)" },
-                                }}
-                              >
-                                {triggerSubmitting ? t("integration.adding") : t("integration.addTrigger")}
-                              </Button>
-                            </Box>
-                          )}
-                        </Box>
-
-                        {/* Tender trigger */}
-                        <Box>
-                          <Typography variant="subtitle1" fontWeight={700} gutterBottom>
-                            {t("integration.tenderTrigger")}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                            {t("integration.tenderTriggerDesc")}
-                          </Typography>
-                          {tenderTriggerConfig ? (
-                            <Paper
-                              variant="outlined"
-                              sx={{
-                                p: 2,
-                                borderRadius: 2,
-                                bgcolor: isDark
-                                  ? "rgba(255,255,255,0.02)"
-                                  : "rgba(0,0,0,0.02)",
-                              }}
-                            >
-                              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                                {t("integration.apiUrlLabel")}
+                              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                {t(section.descKey)}
                               </Typography>
-                              <Box
-                                component="pre"
-                                sx={{
-                                  p: 2,
-                                  borderRadius: 1,
-                                  bgcolor: isDark ? "rgba(0,0,0,0.3)" : "rgba(0,0,0,0.05)",
-                                  overflow: "auto",
-                                  fontSize: "0.75rem",
-                                  fontFamily: "monospace",
-                                  wordBreak: "break-all",
-                                }}
-                              >
-                                {tenderTriggerConfig.apiUrl}
-                              </Box>
-                              <Button
-                                variant="outlined"
-                                color="error"
-                                startIcon={
-                                  tenderTriggerSubmitting ? (
-                                    <CircularProgress size={18} />
-                                  ) : (
-                                    <DeleteIcon />
-                                  )
-                                }
-                                onClick={() => handleRemoveTrigger("tender")}
-                                disabled={tenderTriggerSubmitting || !canManage}
-                                sx={{ mt: 2 }}
-                              >
-                                {t("integration.remove")}
-                              </Button>
-                            </Paper>
-                          ) : (
-                            <Box
-                              component="form"
-                              onSubmit={(e) => handleAddTrigger(e, "tender")}
-                              sx={{ display: "flex", flexDirection: "column", gap: 2.5, maxWidth: 640 }}
-                            >
-                              <TextField
-                                label={t("integration.apiUrlLabel")}
-                                placeholder={t("integration.apiUrlPlaceholder")}
-                                value={tenderTriggerApiUrl}
-                                onChange={(e) => setTenderTriggerApiUrl(e.target.value)}
-                                required
-                                fullWidth
-                                sx={{ "& .MuiInputBase-input": { fontFamily: "monospace", fontSize: "0.85rem" } }}
-                              />
-                              <TextField
-                                label={t("integration.triggerTokenLabel")}
-                                placeholder={t("integration.triggerTokenPlaceholder")}
-                                value={tenderTriggerToken}
-                                onChange={(e) => setTenderTriggerToken(e.target.value)}
-                                required
-                                fullWidth
-                                type="password"
-                                autoComplete="off"
-                                sx={{ "& .MuiInputBase-input": { fontFamily: "monospace", fontSize: "0.85rem" } }}
-                              />
-                              <TextField
-                                label={t("integration.apiPublicUrlLabel")}
-                                placeholder={t("integration.apiPublicUrlPlaceholder")}
-                                value={tenderTriggerApiPublicUrl}
-                                onChange={(e) => setTenderTriggerApiPublicUrl(e.target.value)}
-                                fullWidth
-                                helperText={t("integration.apiPublicUrlHelper")}
-                                sx={{ "& .MuiInputBase-input": { fontFamily: "monospace", fontSize: "0.85rem" } }}
-                              />
-                              <Button
-                                type="submit"
-                                variant="contained"
-                                startIcon={
-                                  tenderTriggerSubmitting ? (
-                                    <CircularProgress size={18} color="inherit" />
-                                  ) : (
-                                    <AddIcon />
-                                  )
-                                }
-                                disabled={
-                                  tenderTriggerSubmitting ||
-                                  !canManage ||
-                                  !tenderTriggerApiUrl.trim() ||
-                                  !tenderTriggerToken.trim()
-                                }
-                                sx={{
-                                  alignSelf: "flex-start",
-                                  background: "linear-gradient(135deg, #2563EB, #7C3AED)",
-                                  "&:hover": { background: "linear-gradient(135deg, #1D4ED8, #6D28D9)" },
-                                }}
-                              >
-                                {tenderTriggerSubmitting ? t("integration.adding") : t("integration.addTrigger")}
-                              </Button>
+                              {config ? (
+                                <Paper
+                                  variant="outlined"
+                                  sx={{
+                                    p: 2,
+                                    borderRadius: 2,
+                                    bgcolor: isDark
+                                      ? "rgba(255,255,255,0.02)"
+                                      : "rgba(0,0,0,0.02)",
+                                  }}
+                                >
+                                  <TriggerValueBlock
+                                    label={t("integration.apiUrlLabel")}
+                                    value={config.apiUrl}
+                                    isDark={isDark}
+                                  />
+                                  <TriggerValueBlock
+                                    label={t("integration.triggerTokenLabel")}
+                                    value={config.triggerToken}
+                                    isDark={isDark}
+                                  />
+                                  {config.apiPublicUrl && (
+                                    <TriggerValueBlock
+                                      label={t("integration.apiPublicUrlLabel")}
+                                      value={config.apiPublicUrl}
+                                      isDark={isDark}
+                                    />
+                                  )}
+                                  <Button
+                                    variant="outlined"
+                                    color="error"
+                                    startIcon={
+                                      submitting ? (
+                                        <CircularProgress size={18} />
+                                      ) : (
+                                        <DeleteIcon />
+                                      )
+                                    }
+                                    onClick={() => handleRemoveTrigger(section.kind)}
+                                    disabled={submitting || !canManage}
+                                  >
+                                    {t("integration.remove")}
+                                  </Button>
+                                </Paper>
+                              ) : (
+                                <Box
+                                  component="form"
+                                  onSubmit={(e) => handleAddTrigger(e, section.kind)}
+                                  sx={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    gap: 2.5,
+                                    maxWidth: 640,
+                                  }}
+                                >
+                                  <TextField
+                                    label={t("integration.apiUrlLabel")}
+                                    placeholder={t("integration.apiUrlPlaceholder")}
+                                    value={form.apiUrl}
+                                    onChange={(e) =>
+                                      updateTriggerForm(section.kind, "apiUrl", e.target.value)
+                                    }
+                                    required
+                                    fullWidth
+                                    sx={{
+                                      "& .MuiInputBase-input": {
+                                        fontFamily: "monospace",
+                                        fontSize: "0.85rem",
+                                      },
+                                    }}
+                                  />
+                                  <TextField
+                                    label={t("integration.triggerTokenLabel")}
+                                    placeholder={t("integration.triggerTokenPlaceholder")}
+                                    value={form.token}
+                                    onChange={(e) =>
+                                      updateTriggerForm(section.kind, "token", e.target.value)
+                                    }
+                                    required
+                                    fullWidth
+                                    autoComplete="off"
+                                    sx={{
+                                      "& .MuiInputBase-input": {
+                                        fontFamily: "monospace",
+                                        fontSize: "0.85rem",
+                                      },
+                                    }}
+                                  />
+                                  {section.showPublicUrl && (
+                                    <TextField
+                                      label={t("integration.apiPublicUrlLabel")}
+                                      placeholder={t("integration.apiPublicUrlPlaceholder")}
+                                      value={form.apiPublicUrl}
+                                      onChange={(e) =>
+                                        updateTriggerForm(
+                                          section.kind,
+                                          "apiPublicUrl",
+                                          e.target.value,
+                                        )
+                                      }
+                                      fullWidth
+                                      helperText={t("integration.apiPublicUrlHelper")}
+                                      sx={{
+                                        "& .MuiInputBase-input": {
+                                          fontFamily: "monospace",
+                                          fontSize: "0.85rem",
+                                        },
+                                      }}
+                                    />
+                                  )}
+                                  <Button
+                                    type="submit"
+                                    variant="contained"
+                                    startIcon={
+                                      submitting ? (
+                                        <CircularProgress size={18} color="inherit" />
+                                      ) : (
+                                        <AddIcon />
+                                      )
+                                    }
+                                    disabled={
+                                      submitting ||
+                                      !canManage ||
+                                      !form.apiUrl.trim() ||
+                                      !form.token.trim()
+                                    }
+                                    sx={{
+                                      alignSelf: "flex-start",
+                                      background:
+                                        "linear-gradient(135deg, #2563EB, #7C3AED)",
+                                      "&:hover": {
+                                        background:
+                                          "linear-gradient(135deg, #1D4ED8, #6D28D9)",
+                                      },
+                                    }}
+                                  >
+                                    {submitting
+                                      ? t("integration.adding")
+                                      : t("integration.addTrigger")}
+                                  </Button>
+                                </Box>
+                              )}
                             </Box>
-                          )}
-                        </Box>
+                          );
+                        })}
                       </Box>
                     ) : integrations.find((i) => i.type === tab.value) ? (
                       <Paper

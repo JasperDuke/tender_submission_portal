@@ -189,14 +189,14 @@ async function triggerAgentOnTenderCreate({ tender }) {
 
 /**
  * Trigger the Atenxion agent webhook when a proposal is awarded.
- * Uses the same proposal trigger config (URL + token).
+ * Uses the dedicated awarded trigger config (URL + token).
  * Payload: event_id, tenderId, vendorId, triggerType.
  */
 async function triggerAgentOnProposalAwarded({ tenderId, vendorId }) {
-  const config = await getConfigForType(TRIGGER_TYPE_PROPOSAL);
+  const config = await getConfigForType(TRIGGER_TYPE_AWARDED);
   if (!config || !config.apiUrl || !config.triggerToken) {
     console.log(
-      "[webhook] Proposal trigger config missing or incomplete – skipping awarded",
+      "[webhook] Awarded trigger config missing or incomplete – skipping",
     );
     return;
   }
@@ -208,7 +208,7 @@ async function triggerAgentOnProposalAwarded({ tenderId, vendorId }) {
     vendorId: String(vendorId),
   };
 
-  return sendWebhook({ config, payload, label: "proposal awarded trigger" });
+  return sendWebhook({ config, payload, label: "awarded trigger" });
 }
 
 module.exports = {
