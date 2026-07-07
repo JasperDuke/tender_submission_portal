@@ -15,9 +15,10 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import apiClient from '@/lib/apiClient';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { isAwardedStatus, proposalStatusLabelKey } from '@/lib/proposalStatus';
 
 const STATUS_COLORS: Record<string, 'default' | 'warning' | 'info' | 'success' | 'error' | 'primary'> = {
-  Pending: 'default', Reviewed: 'info', Accepted: 'success', Rejected: 'error', Shortlisted: 'primary',
+  Pending: 'default', Reviewed: 'info', Awarded: 'success', Accepted: 'success', Rejected: 'error', Shortlisted: 'primary',
 };
 
 interface Proposal {
@@ -136,15 +137,15 @@ export default function MyProposalsPage() {
                     </TableCell>
                   </TableRow>
                 ) : proposals.map((p) => {
-                  const isEvaluated = ['Accepted', 'Rejected'].includes(p.status);
-                  const isAccepted = p.status === 'Accepted';
+                  const isEvaluated = isAwardedStatus(p.status) || p.status === 'Rejected';
+                  const isAwarded = isAwardedStatus(p.status);
                   const isRejected = p.status === 'Rejected';
                   return (
                     <TableRow
                       key={p._id}
                       hover
                       sx={{
-                        ...(isAccepted && {
+                        ...(isAwarded && {
                           borderLeft: '4px solid',
                           borderLeftColor: 'success.main',
                           bgcolor: 'action.hover',
@@ -184,10 +185,10 @@ export default function MyProposalsPage() {
                       <TableCell>
                         <Chip
                           label={
-                            p.status === 'Accepted'
-                              ? t('proposals.statusAccepted')
+                            isAwardedStatus(p.status)
+                              ? t('proposals.statusAwarded')
                               : p.status === 'Rejected'
-                                ? t('proposals.notAccepted')
+                                ? t('proposals.notAwarded')
                                 : ['Pending', 'Reviewed', 'Shortlisted'].includes(p.status)
                                   ? t(`proposals.status${p.status}`)
                                   : p.status

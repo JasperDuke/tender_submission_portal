@@ -218,9 +218,9 @@ export default function TendersPage() {
                           <Chip
                             label={
                               user?.role === 'vendor'
-                                ? t('proposals.appliedAccepted', { applied: tender.proposalStats.appliedCount, accepted: tender.proposalStats.acceptedCount })
+                                ? t('proposals.appliedAwarded', { applied: tender.proposalStats.appliedCount, awarded: tender.proposalStats.acceptedCount })
                                 : tender.proposalStats.acceptedCount > 0
-                                  ? t('proposals.appliedAccepted', { applied: tender.proposalStats.appliedCount, accepted: tender.proposalStats.acceptedCount })
+                                  ? t('proposals.appliedAwarded', { applied: tender.proposalStats.appliedCount, awarded: tender.proposalStats.acceptedCount })
                                   : `${tender.proposalStats.appliedCount} ${t('proposals.applied')}`
                             }
                             size="small"

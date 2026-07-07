@@ -6,6 +6,7 @@ const User = require("../models/User");
 
 const TRIGGER_TYPE_PROPOSAL = "proposal";
 const TRIGGER_TYPE_TENDER = "tender";
+const TRIGGER_TYPE_AWARDED = "awarded";
 
 async function getConfigForType(type) {
   let config = await TriggerConfig.findOne({ type });
@@ -186,9 +187,35 @@ async function triggerAgentOnTenderCreate({ tender }) {
   return sendWebhook({ config, payload, label: "tender create trigger" });
 }
 
+/**
+ * Trigger the Atenxion agent webhook when a proposal is awarded.
+ * Uses the same proposal trigger config (URL + token).
+ * Payload: event_id, tenderId, vendorId, triggerType.
+ */
+async function triggerAgentOnProposalAwarded({ tenderId, vendorId }) {
+  const config = await getConfigForType(TRIGGER_TYPE_PROPOSAL);
+  if (!config || !config.apiUrl || !config.triggerToken) {
+    console.log(
+      "[webhook] Proposal trigger config missing or incomplete – skipping awarded",
+    );
+    return;
+  }
+
+  const payload = {
+    event_id: `tender_awarded_event_${crypto.randomUUID()}`,
+    triggerType: TRIGGER_TYPE_AWARDED,
+    tenderId: String(tenderId),
+    vendorId: String(vendorId),
+  };
+
+  return sendWebhook({ config, payload, label: "proposal awarded trigger" });
+}
+
 module.exports = {
   triggerAgentOnProposalSubmit,
   triggerAgentOnTenderCreate,
+  triggerAgentOnProposalAwarded,
   TRIGGER_TYPE_PROPOSAL,
   TRIGGER_TYPE_TENDER,
+  TRIGGER_TYPE_AWARDED,
 };

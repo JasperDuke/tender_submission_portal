@@ -16,10 +16,11 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import apiClient from '@/lib/apiClient';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { isAwardedStatus, proposalStatusLabelKey } from '@/lib/proposalStatus';
 
-const STATUS_OPTIONS = ['Pending', 'Reviewed', 'Accepted', 'Rejected', 'Shortlisted'];
+const STATUS_OPTIONS = ['Pending', 'Reviewed', 'Awarded', 'Rejected', 'Shortlisted'];
 const STATUS_COLORS: Record<string, 'default' | 'warning' | 'info' | 'success' | 'error' | 'primary'> = {
-  Pending: 'default', Reviewed: 'info', Accepted: 'success', Rejected: 'error', Shortlisted: 'primary',
+  Pending: 'default', Reviewed: 'info', Awarded: 'success', Accepted: 'success', Rejected: 'error', Shortlisted: 'primary',
 };
 
 interface Proposal {
@@ -86,12 +87,18 @@ export default function TenderDetailPage() {
     { value: 'Pending', labelKey: 'proposals.statusPending' },
     { value: 'Reviewed', labelKey: 'proposals.statusReviewed' },
     { value: 'Shortlisted', labelKey: 'proposals.statusShortlisted' },
-    { value: 'Accepted', labelKey: 'proposals.statusAccepted' },
+    { value: 'Awarded', labelKey: 'proposals.statusAwarded' },
     { value: 'Rejected', labelKey: 'proposals.statusRejected' },
   ];
 
   const filteredProposals =
-    statusTab === 'all' ? proposals : proposals.filter((p) => (remarkEdits[p._id]?.status ?? p.status) === statusTab);
+    statusTab === 'all'
+      ? proposals
+      : proposals.filter((p) => {
+          const s = remarkEdits[p._id]?.status ?? p.status;
+          if (statusTab === 'Awarded') return isAwardedStatus(s);
+          return s === statusTab;
+        });
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -227,7 +234,7 @@ export default function TenderDetailPage() {
               {/* Vendor: show applied/accepted stats (no rejected); also show my status if applied */}
               {user?.role === 'vendor' && tender.proposalStats && tender.proposalStats.appliedCount > 0 && (
                 <Chip
-                  label={`${tender.proposalStats.appliedCount} applied, ${tender.proposalStats.acceptedCount} accepted`}
+                  label={`${tender.proposalStats.appliedCount} applied, ${tender.proposalStats.acceptedCount} awarded`}
                   size="small"
                   variant="outlined"
                   color={tender.proposalStats.acceptedCount > 0 ? 'success' : 'default'}
@@ -237,15 +244,15 @@ export default function TenderDetailPage() {
               {user?.role === 'vendor' && tender.myProposal && (
                 <Chip
                   label={
-                    tender.myProposal.status === 'Accepted'
-                      ? t('proposals.youWereAccepted')
+                    tender.myProposal.status && isAwardedStatus(tender.myProposal.status)
+                      ? t('proposals.youWereAwarded')
                       : tender.myProposal.status === 'Rejected'
-                        ? t('proposals.notAccepted')
+                        ? t('proposals.notAwarded')
                         : t('proposals.yourStatus', { status: tender.myProposal.status })
                   }
                   size="small"
                   color={
-                    tender.myProposal.status === 'Accepted'
+                    isAwardedStatus(tender.myProposal.status)
                       ? 'success'
                       : tender.myProposal.status === 'Rejected'
                         ? 'error'
@@ -375,14 +382,14 @@ export default function TenderDetailPage() {
         </Card>
 
         {/* ── VENDOR: Status banner (if already applied) ── */}
-        {user?.role === 'vendor' && tender.myProposal && ['Accepted', 'Rejected'].includes(tender.myProposal.status) && (
+        {user?.role === 'vendor' && tender.myProposal && (isAwardedStatus(tender.myProposal.status) || tender.myProposal.status === 'Rejected') && (
           <Alert
-            severity={tender.myProposal.status === 'Accepted' ? 'success' : 'error'}
+            severity={isAwardedStatus(tender.myProposal.status) ? 'success' : 'error'}
             sx={{ mb: 3 }}
           >
             <Typography fontWeight={600}>
-              {tender.myProposal.status === 'Accepted'
-                ? t('proposals.acceptedBanner')
+              {isAwardedStatus(tender.myProposal.status)
+                ? t('proposals.awardedBanner')
                 : t('proposals.rejectedBanner')}
             </Typography>
             {tender.myProposal.remarks && (
@@ -403,15 +410,15 @@ export default function TenderDetailPage() {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
                 <Chip
                   label={
-                    tender.myProposal.status === 'Accepted'
-                      ? t('proposals.youWereAccepted')
+                    tender.myProposal.status && isAwardedStatus(tender.myProposal.status)
+                      ? t('proposals.youWereAwarded')
                       : tender.myProposal.status === 'Rejected'
-                        ? t('proposals.notAccepted')
+                        ? t('proposals.notAwarded')
                         : t('proposals.yourStatus', { status: tender.myProposal.status })
                   }
                   size="small"
                   color={
-                    tender.myProposal.status === 'Accepted'
+                    isAwardedStatus(tender.myProposal.status)
                       ? 'success'
                       : tender.myProposal.status === 'Rejected'
                         ? 'error'
@@ -520,9 +527,9 @@ export default function TenderDetailPage() {
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 0.75 }}>
                     <Chip label={t('proposals.countSubmitted', { count: proposals.length })} size="small" variant="outlined" sx={{ fontSize: '0.7rem', height: 24 }} />
-                    <Chip label={t('proposals.countAccepted', { count: proposals.filter((p) => (remarkEdits[p._id]?.status ?? p.status) === 'Accepted').length })} size="small" color="success" sx={{ fontSize: '0.7rem', height: 24 }} />
+                    <Chip label={t('proposals.countAwarded', { count: proposals.filter((p) => isAwardedStatus(remarkEdits[p._id]?.status ?? p.status)).length })} size="small" color="success" sx={{ fontSize: '0.7rem', height: 24 }} />
                     <Chip label={t('proposals.countRejected', { count: proposals.filter((p) => (remarkEdits[p._id]?.status ?? p.status) === 'Rejected').length })} size="small" color="error" sx={{ fontSize: '0.7rem', height: 24 }} />
-                    <Chip label={t('proposals.countPending', { count: proposals.filter((p) => !['Accepted', 'Rejected'].includes(remarkEdits[p._id]?.status ?? p.status)).length })} size="small" color="warning" sx={{ fontSize: '0.7rem', height: 24 }} />
+                    <Chip label={t('proposals.countPending', { count: proposals.filter((p) => { const s = remarkEdits[p._id]?.status ?? p.status; return !isAwardedStatus(s) && s !== 'Rejected'; }).length })} size="small" color="warning" sx={{ fontSize: '0.7rem', height: 24 }} />
                   </Box>
                 </Box>
               </Box>
@@ -541,7 +548,7 @@ export default function TenderDetailPage() {
                 }}
               >
                 {STATUS_TABS.map((tab) => {
-                  const count = tab.value === 'all' ? proposals.length : proposals.filter((p) => (remarkEdits[p._id]?.status ?? p.status) === tab.value).length;
+                  const count = tab.value === 'all' ? proposals.length : tab.value === 'Awarded' ? proposals.filter((p) => isAwardedStatus(remarkEdits[p._id]?.status ?? p.status)).length : proposals.filter((p) => (remarkEdits[p._id]?.status ?? p.status) === tab.value).length;
                   return (
                     <Tab
                       key={tab.value}
@@ -601,7 +608,7 @@ export default function TenderDetailPage() {
                               <Typography variant="caption" color="text.secondary">{p.vendorId.profile.contactPerson}</Typography>
                             )}
                           </Box>
-                          <Chip label={status === 'Pending' || status === 'Reviewed' || status === 'Shortlisted' || status === 'Accepted' || status === 'Rejected' ? t(`proposals.status${status}`) : status} size="small" color={STATUS_COLORS[status] || 'default'} sx={{ fontWeight: 600 }} />
+                          <Chip label={t(proposalStatusLabelKey(status))} size="small" color={STATUS_COLORS[status] || STATUS_COLORS.Awarded} sx={{ fontWeight: 600 }} />
                           <Typography variant="caption" color="text.secondary" sx={{ minWidth: 80 }}>
                             {new Date(p.submittedAt).toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: 'numeric' })}
                           </Typography>
@@ -642,7 +649,7 @@ export default function TenderDetailPage() {
                     </Avatar>
                     <Box>
                       <Typography variant="h6" fontWeight={700}>{vendorName}</Typography>
-                      <Chip label={edit.status === 'Pending' || edit.status === 'Reviewed' || edit.status === 'Shortlisted' || edit.status === 'Accepted' || edit.status === 'Rejected' ? t(`proposals.status${edit.status}`) : edit.status} size="small" color={STATUS_COLORS[edit.status] || 'default'} sx={{ mt: 0.5 }} />
+                      <Chip label={t(proposalStatusLabelKey(edit.status))} size="small" color={STATUS_COLORS[edit.status] || STATUS_COLORS.Awarded} sx={{ mt: 0.5 }} />
                     </Box>
                   </Box>
 

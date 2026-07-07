@@ -3,7 +3,8 @@ const fs = require('fs');
 const Proposal = require('../models/Proposal');
 const Tender = require('../models/Tender');
 const { sendEmail } = require('../services/emailService');
-const { triggerAgentOnProposalSubmit } = require('../services/agentTriggerWebhook');
+const { triggerAgentOnProposalSubmit, triggerAgentOnProposalAwarded } = require('../services/agentTriggerWebhook');
+const { isAwardedStatus, AWARDED_STATUS } = require('../utils/proposalStatus');
 
 /**
  * POST /api/proposals
@@ -145,7 +146,7 @@ const updateProposal = async (req, res, next) => {
       return res.status(403).json({ success: false, message: 'Not authorised to update this proposal' });
     }
 
-    if (['Accepted', 'Rejected'].includes(proposal.status)) {
+    if (isAwardedStatus(proposal.status) || proposal.status === 'Rejected') {
       return res.status(400).json({ success: false, message: 'Cannot replace a proposal that has already been evaluated' });
     }
 
@@ -198,7 +199,7 @@ const deleteProposal = async (req, res, next) => {
 const updateProposalStatus = async (req, res, next) => {
   try {
     const { status, remarks, score } = req.body;
-    const allowedStatuses = ['Pending', 'Reviewed', 'Accepted', 'Rejected', 'Shortlisted'];
+    const allowedStatuses = ['Pending', 'Reviewed', 'Awarded', 'Accepted', 'Rejected', 'Shortlisted'];
 
     if (status && !allowedStatuses.includes(status)) {
       return res.status(400).json({ success: false, message: `Status must be one of: ${allowedStatuses.join(', ')}` });
@@ -210,19 +211,28 @@ const updateProposalStatus = async (req, res, next) => {
     if (!proposal) return res.status(404).json({ success: false, message: 'Proposal not found' });
 
     const previousStatus = proposal.status;
-    if (status) proposal.status = status;
+    if (status) proposal.status = status === 'Accepted' ? AWARDED_STATUS : status;
     if (remarks !== undefined) proposal.remarks = remarks;
     if (score !== undefined) proposal.score = score;
 
     await proposal.save();
 
-    // Notify vendor when status changes to Accepted or Rejected – recipient is the User (vendor) who submitted
+    const newStatus = proposal.status;
+    if (isAwardedStatus(newStatus) && !isAwardedStatus(previousStatus)) {
+      const tid = proposal.tenderId?._id || proposal.tenderId;
+      const vid = proposal.vendorId?._id || proposal.vendorId;
+      triggerAgentOnProposalAwarded({ tenderId: tid, vendorId: vid }).catch((err) => {
+        console.error('[webhook] Proposal awarded trigger failed:', err.message);
+      });
+    }
+
+    // Notify vendor when status changes to Awarded or Rejected
     const vendorEmail = proposal.vendorId?.email?.trim?.();
     if (
       status &&
-      ['Accepted', 'Rejected'].includes(status) &&
-      status !== previousStatus &&
-      vendorEmail
+      newStatus !== previousStatus &&
+      vendorEmail &&
+      (isAwardedStatus(newStatus) || newStatus === 'Rejected')
     ) {
       if (process.env.NODE_ENV === 'development') {
         console.log('[email] Notifying vendor:', vendorEmail);
@@ -230,11 +240,11 @@ const updateProposalStatus = async (req, res, next) => {
       const tenderTitle = proposal.tenderId?.title || 'Tender';
       sendEmail({
         to: vendorEmail,
-        subject: status === 'Accepted' ? `Proposal accepted: ${tenderTitle}` : `Proposal update: ${tenderTitle}`,
+        subject: isAwardedStatus(newStatus) ? `Proposal awarded: ${tenderTitle}` : `Proposal update: ${tenderTitle}`,
         html:
-          status === 'Accepted'
+          isAwardedStatus(newStatus)
             ? `
-          <p>Your proposal for <strong>${tenderTitle}</strong> has been <strong>accepted</strong>.</p>
+          <p>Your proposal for <strong>${tenderTitle}</strong> has been <strong>awarded</strong>.</p>
           ${proposal.remarks ? `<p><strong>Remarks:</strong> ${proposal.remarks}</p>` : ''}
           <p>Log in to the portal to view details.</p>
         `

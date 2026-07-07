@@ -1,5 +1,6 @@
 const Tender = require('../models/Tender');
 const Proposal = require('../models/Proposal');
+const { awardedCountAggregation } = require('../utils/proposalStatus');
 const { triggerAgentOnTenderCreate } = require('../services/agentTriggerWebhook');
 
 /**
@@ -46,7 +47,7 @@ const getTenders = async (req, res, next) => {
         $group: {
           _id: '$tenderId',
           appliedCount: { $sum: 1 },
-          acceptedCount: { $sum: { $cond: [{ $eq: ['$status', 'Accepted'] }, 1, 0] } },
+          acceptedCount: awardedCountAggregation,
           rejectedCount: { $sum: { $cond: [{ $eq: ['$status', 'Rejected'] }, 1, 0] } },
         },
       },
@@ -100,7 +101,7 @@ const getTenderById = async (req, res, next) => {
         $group: {
           _id: null,
           appliedCount: { $sum: 1 },
-          acceptedCount: { $sum: { $cond: [{ $eq: ['$status', 'Accepted'] }, 1, 0] } },
+          acceptedCount: awardedCountAggregation,
           rejectedCount: { $sum: { $cond: [{ $eq: ['$status', 'Rejected'] }, 1, 0] } },
         },
       },

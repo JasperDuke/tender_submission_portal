@@ -1,5 +1,7 @@
 const Tender = require("../models/Tender");
 const Proposal = require("../models/Proposal");
+const { triggerAgentOnProposalAwarded } = require("../services/agentTriggerWebhook");
+const { awardedCountAggregation, isAwardedStatus } = require("../utils/proposalStatus");
 
 /**
  * POST /api/agent/whoami
@@ -51,9 +53,7 @@ const getMyTenders = async (req, res, next) => {
         $group: {
           _id: "$tenderId",
           appliedCount: { $sum: 1 },
-          acceptedCount: {
-            $sum: { $cond: [{ $eq: ["$status", "Accepted"] }, 1, 0] },
-          },
+          acceptedCount: awardedCountAggregation,
           rejectedCount: {
             $sum: { $cond: [{ $eq: ["$status", "Rejected"] }, 1, 0] },
           },
@@ -144,9 +144,7 @@ const getMyTenderById = async (req, res, next) => {
         $group: {
           _id: null,
           appliedCount: { $sum: 1 },
-          acceptedCount: {
-            $sum: { $cond: [{ $eq: ["$status", "Accepted"] }, 1, 0] },
-          },
+          acceptedCount: awardedCountAggregation,
           rejectedCount: {
             $sum: { $cond: [{ $eq: ["$status", "Rejected"] }, 1, 0] },
           },
@@ -266,7 +264,8 @@ const updateVendorStatus = async (req, res, next) => {
     const validStatuses = [
       "Pending",
       "Reviewed",
-      "Accepted",
+      "Awarded",
+      "Accepted", // legacy – treated as Awarded
       "Rejected",
       "Shortlisted",
     ];
@@ -301,8 +300,16 @@ const updateVendorStatus = async (req, res, next) => {
       });
     }
 
-    proposal.status = updateStatus;
+    const previousStatus = proposal.status;
+    proposal.status = updateStatus === 'Accepted' ? 'Awarded' : updateStatus;
     await proposal.save();
+
+    const newStatus = proposal.status;
+    if (isAwardedStatus(newStatus) && !isAwardedStatus(previousStatus)) {
+      triggerAgentOnProposalAwarded({ tenderId, vendorId }).catch((err) => {
+        console.error("[webhook] Proposal awarded trigger failed:", err.message);
+      });
+    }
 
     res.status(200).json({
       success: true,

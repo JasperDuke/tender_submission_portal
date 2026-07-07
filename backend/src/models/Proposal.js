@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const PROPOSAL_STATUSES = ['Pending', 'Reviewed', 'Accepted', 'Rejected', 'Shortlisted'];
+const PROPOSAL_STATUSES = ['Pending', 'Reviewed', 'Awarded', 'Accepted', 'Rejected', 'Shortlisted'];
 
 const proposalSchema = new mongoose.Schema(
   {
