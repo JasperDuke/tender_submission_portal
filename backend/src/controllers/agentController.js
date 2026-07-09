@@ -306,7 +306,11 @@ const updateVendorStatus = async (req, res, next) => {
 
     const newStatus = proposal.status;
     if (isAwardedStatus(newStatus) && !isAwardedStatus(previousStatus)) {
-      triggerAgentOnProposalAwarded({ tenderId, vendorId }).catch((err) => {
+      triggerAgentOnProposalAwarded({
+        proposalId: proposal._id,
+        tenderId,
+        vendorId,
+      }).catch((err) => {
         console.error("[webhook] Proposal awarded trigger failed:", err.message);
       });
     }

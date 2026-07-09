@@ -40,6 +40,7 @@ const submitProposal = async (req, res, next) => {
 
     // Trigger agent webhook (fire-and-forget; does not block response)
     triggerAgentOnProposalSubmit({
+      proposalId: proposal._id,
       tenderId,
       vendor: req.user,
       attachmentFilePath: req.file.path,
@@ -221,7 +222,11 @@ const updateProposalStatus = async (req, res, next) => {
     if (isAwardedStatus(newStatus) && !isAwardedStatus(previousStatus)) {
       const tid = proposal.tenderId?._id || proposal.tenderId;
       const vid = proposal.vendorId?._id || proposal.vendorId;
-      triggerAgentOnProposalAwarded({ tenderId: tid, vendorId: vid }).catch((err) => {
+      triggerAgentOnProposalAwarded({
+        proposalId: proposal._id,
+        tenderId: tid,
+        vendorId: vid,
+      }).catch((err) => {
         console.error('[webhook] Proposal awarded trigger failed:', err.message);
       });
     }

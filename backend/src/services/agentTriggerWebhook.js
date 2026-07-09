@@ -67,6 +67,7 @@ async function sendWebhook({ config, payload, label }) {
   console.log(`[webhook] calling ${label}`, {
     event_id: payload.event_id,
     tenderId: payload.tenderId,
+    proposalId: payload.proposalId,
     attachments,
   });
 
@@ -98,6 +99,7 @@ async function sendWebhook({ config, payload, label }) {
  * Only sends if proposal TriggerConfig exists with both apiUrl and triggerToken.
  */
 async function triggerAgentOnProposalSubmit({
+  proposalId,
   tenderId,
   vendor,
   attachmentFilePath,
@@ -120,6 +122,7 @@ async function triggerAgentOnProposalSubmit({
   const payload = {
     event_id: eventId,
     triggerType: TRIGGER_TYPE_PROPOSAL,
+    proposalId: String(proposalId),
     tenderId: String(tenderId),
     vendorId: vendor?._id?.toString(),
     vendorEmail: vendor?.email,
@@ -190,9 +193,9 @@ async function triggerAgentOnTenderCreate({ tender }) {
 /**
  * Trigger the Atenxion agent webhook when a proposal is awarded.
  * Uses the dedicated awarded trigger config (URL + token).
- * Payload: event_id, tenderId, vendorId, triggerType.
+ * Payload: event_id, proposalId, tenderId, vendorId, triggerType.
  */
-async function triggerAgentOnProposalAwarded({ tenderId, vendorId }) {
+async function triggerAgentOnProposalAwarded({ proposalId, tenderId, vendorId }) {
   const config = await getConfigForType(TRIGGER_TYPE_AWARDED);
   if (!config || !config.apiUrl || !config.triggerToken) {
     console.log(
@@ -204,6 +207,7 @@ async function triggerAgentOnProposalAwarded({ tenderId, vendorId }) {
   const payload = {
     event_id: `tender_awarded_event_${crypto.randomUUID()}`,
     triggerType: TRIGGER_TYPE_AWARDED,
+    proposalId: String(proposalId),
     tenderId: String(tenderId),
     vendorId: String(vendorId),
   };
