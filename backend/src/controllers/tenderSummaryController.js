@@ -29,7 +29,7 @@ function normalizeSummary(summary) {
 
 /**
  * POST /api/tender-summaries
- * Role: companyUser, admin
+ * Public – no auth required (agent integration).
  * Body: { tenderId, summary: { boqSummary, historicalSummary } }
  */
 const upsertTenderSummary = async (req, res, next) => {
@@ -58,13 +58,6 @@ const upsertTenderSummary = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Tender not found' });
     }
 
-    if (
-      req.user.role !== 'admin' &&
-      tender.createdBy.toString() !== req.user._id.toString()
-    ) {
-      return res.status(403).json({ success: false, message: 'Not authorised to save summary for this tender' });
-    }
-
     const tenderSummary = await TenderSummary.findOneAndUpdate(
       { tenderId },
       { tenderId, summary: normalizeSummary(summary) },
@@ -79,7 +72,7 @@ const upsertTenderSummary = async (req, res, next) => {
 
 /**
  * GET /api/tender-summaries/tender/:tenderId
- * Role: companyUser, admin
+ * Public – no auth required (agent integration).
  */
 const getTenderSummaryByTenderId = async (req, res, next) => {
   try {
