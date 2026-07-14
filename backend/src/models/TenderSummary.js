@@ -11,17 +11,10 @@ const scopeCoverageRowSchema = new mongoose.Schema(
 const boqVendorSchema = new mongoose.Schema(
   {
     vendorName: { type: String, required: true, trim: true },
-    matchStatus: { type: String, required: true, trim: true },
+    matchStatus: { type: String, trim: true, default: '' },
     scopeCoverage: { type: [scopeCoverageRowSchema], default: [] },
-    coverageSummary: { type: String, required: true, trim: true },
-    keyDifferences: {
-      type: [{ type: String, trim: true }],
-      required: true,
-      validate: {
-        validator: (v) => Array.isArray(v) && v.length > 0 && v.every((item) => item?.trim()),
-        message: 'keyDifferences must include at least one non-empty item',
-      },
-    },
+    coverageSummary: { type: String, trim: true, default: '' },
+    keyDifferences: { type: [{ type: String, trim: true }], default: [] },
   },
   { _id: false }
 );
@@ -52,10 +45,10 @@ const pricingOverviewRowSchema = new mongoose.Schema(
 
 const historicalPriceRowSchema = new mongoose.Schema(
   {
-    item: { type: String, required: true, trim: true },
-    vendorPrice: { type: String, required: true, trim: true },
-    historicalPrice: { type: String, required: true, trim: true },
-    variance: { type: String, required: true, trim: true },
+    item: { type: String, trim: true, default: '' },
+    vendorPrice: { type: String, trim: true, default: '' },
+    historicalPrice: { type: String, trim: true, default: '' },
+    variance: { type: String, trim: true, default: '' },
   },
   { _id: false }
 );
@@ -63,14 +56,7 @@ const historicalPriceRowSchema = new mongoose.Schema(
 const historicalVendorSchema = new mongoose.Schema(
   {
     vendorName: { type: String, required: true, trim: true },
-    pricingOverview: {
-      type: [pricingOverviewRowSchema],
-      required: true,
-      validate: {
-        validator: (v) => Array.isArray(v) && v.length > 0,
-        message: 'pricingOverview must include at least one row',
-      },
-    },
+    pricingOverview: { type: [pricingOverviewRowSchema], default: [] },
     aboveHistorical: { type: [historicalPriceRowSchema], default: [] },
     belowHistorical: { type: [historicalPriceRowSchema], default: [] },
     commercialObservation: { type: String, trim: true, default: '' },

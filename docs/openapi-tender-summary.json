@@ -2,8 +2,8 @@
   "openapi": "3.0.3",
   "info": {
     "title": "DemoSourcing API - Tender Summary Callback",
-    "version": "2.0.0",
-    "description": "Submit AI-generated tender summaries for a published tender. Send `tenderId` from agent context plus `summary` with per-vendor `boqSummary` and `historicalSummary` sections. Each section contains a `vendors` array (one entry per submitted proposal), plus `overall` and `conclusion` across all vendors. No authentication required."
+    "version": "2.1.0",
+    "description": "Submit AI-generated tender summaries for a published tender. Send `tenderId` from agent context plus `summary` with per-vendor `boqSummary` and `historicalSummary` sections. `pricingOverview` may be empty when historical benchmark data is unavailable. Numeric counts may be sent as strings. No authentication required."
   },
   "servers": [
     {
@@ -205,7 +205,7 @@
       },
       "BoqVendorSummary": {
         "type": "object",
-        "required": ["vendorName", "matchStatus", "coverageSummary", "keyDifferences"],
+        "required": ["vendorName"],
         "properties": {
           "vendorName": {
             "type": "string",
@@ -228,11 +228,10 @@
           },
           "keyDifferences": {
             "type": "array",
-            "minItems": 1,
             "items": {
               "type": "string"
             },
-            "description": "Bullet list of key BOQ differences for this vendor"
+            "description": "Optional bullet list of key BOQ differences for this vendor"
           }
         }
       },
@@ -265,7 +264,11 @@
             "type": "string"
           },
           "count": {
-            "type": "number"
+            "oneOf": [
+              { "type": "number" },
+              { "type": "string" }
+            ],
+            "description": "Metric count. Numeric strings such as \"23\" are accepted."
           }
         }
       },
@@ -292,7 +295,7 @@
       },
       "HistoricalVendorSummary": {
         "type": "object",
-        "required": ["vendorName", "pricingOverview", "aboveHistorical", "belowHistorical"],
+        "required": ["vendorName"],
         "properties": {
           "vendorName": {
             "type": "string",
@@ -300,10 +303,10 @@
           },
           "pricingOverview": {
             "type": "array",
-            "minItems": 1,
             "items": {
               "$ref": "#/components/schemas/PricingOverviewRow"
-            }
+            },
+            "description": "Optional pricing overview table. May be empty when historical benchmark data is unavailable."
           },
           "aboveHistorical": {
             "type": "array",
