@@ -1,0 +1,412 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "DemoSourcing API - Tender Summary Callback",
+    "version": "2.0.0",
+    "description": "Submit AI-generated tender summaries for a published tender. Send `tenderId` from agent context plus `summary` with per-vendor `boqSummary` and `historicalSummary` sections. Each section contains a `vendors` array (one entry per submitted proposal), plus `overall` and `conclusion` across all vendors. No authentication required."
+  },
+  "servers": [
+    {
+      "url": "https://api-demosourcing.atenxion.ai/api",
+      "description": "Production Server"
+    }
+  ],
+  "paths": {
+    "/tender-summaries": {
+      "post": {
+        "operationId": "upsertTenderSummary",
+        "tags": ["Tender Summaries"],
+        "summary": "Submit tender summary",
+        "description": "Create or update the AI-generated summary for a tender. Use the exact `tenderId` from agent context. Include one `vendors` entry per submitted proposal vendor. Both `boqSummary` and `historicalSummary` require `vendors`, `overall`, and `conclusion`.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertTenderSummaryRequest"
+              },
+              "example": {
+                "tenderId": "674a1b2c3d4e5f6789012345",
+                "summary": {
+                  "boqSummary": {
+                    "vendors": [
+                      {
+                        "vendorName": "Allied",
+                        "matchStatus": "Mostly Matched",
+                        "scopeCoverage": [
+                          { "metric": "Matched Items", "result": "23" },
+                          { "metric": "Missing Items", "result": "0" },
+                          { "metric": "Additional Items", "result": "0" },
+                          { "metric": "Quantity Differences", "result": "2" }
+                        ],
+                        "coverageSummary": "The proposal covers the complete core Tender BOQ scope including Site Office works, Guard House works, lighting, earthing, socket outlets and distribution boards.",
+                        "keyDifferences": [
+                          "Several BOQ descriptions are abbreviated compared with the Tender BOQ.",
+                          "Some BOQ numbering is duplicated or split across multiple entries."
+                        ]
+                      },
+                      {
+                        "vendorName": "YUSEN",
+                        "matchStatus": "Fully Matched",
+                        "scopeCoverage": [
+                          { "metric": "Matched Items", "result": "25" },
+                          { "metric": "Missing Items", "result": "0" }
+                        ],
+                        "coverageSummary": "YUSEN submitted a comprehensive BOQ aligned closely with the tender schedule.",
+                        "keyDifferences": [
+                          "One additional optional item included under finishing works."
+                        ]
+                      }
+                    ],
+                    "overall": "Both vendors cover the core tender scope. Allied shows minor presentation gaps while YUSEN demonstrates stronger alignment.",
+                    "conclusion": "From a BOQ coverage perspective, YUSEN is technically stronger on completeness and schedule alignment."
+                  },
+                  "historicalSummary": {
+                    "vendors": [
+                      {
+                        "vendorName": "Allied",
+                        "pricingOverview": [
+                          { "metric": "Compared Items", "count": 23 },
+                          { "metric": "Above Historical", "count": 3 },
+                          { "metric": "Comparable", "count": 18 },
+                          { "metric": "Below Historical", "count": 2 },
+                          { "metric": "No Historical Rate", "count": 0 }
+                        ],
+                        "aboveHistorical": [
+                          {
+                            "item": "A17",
+                            "vendorPrice": "RM1,064.00",
+                            "historicalPrice": "RM984.00",
+                            "variance": "+8.13%"
+                          }
+                        ],
+                        "belowHistorical": [
+                          {
+                            "item": "Neutral Link Box",
+                            "vendorPrice": "RM11.20",
+                            "historicalPrice": "RM14.20",
+                            "variance": "-21.13%"
+                          }
+                        ],
+                        "commercialObservation": "Most pricing aligns closely with historical benchmark."
+                      },
+                      {
+                        "vendorName": "YUSEN",
+                        "pricingOverview": [
+                          { "metric": "Compared Items", "count": 25 },
+                          { "metric": "Above Historical", "count": 1 },
+                          { "metric": "Comparable", "count": 21 },
+                          { "metric": "Below Historical", "count": 3 },
+                          { "metric": "No Historical Rate", "count": 0 }
+                        ],
+                        "aboveHistorical": [],
+                        "belowHistorical": [
+                          {
+                            "item": "Site Office Earthing",
+                            "vendorPrice": "RM3,800.00",
+                            "historicalPrice": "RM4,150.00",
+                            "variance": "-8.43%"
+                          }
+                        ],
+                        "commercialObservation": "YUSEN pricing is predominantly at or below historical benchmark."
+                      }
+                    ],
+                    "overall": "Across both vendors, the majority of line items are commercially comparable to historical rates.",
+                    "conclusion": "Commercially, YUSEN presents the stronger value proposition with fewer above-benchmark items."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tender summary stored successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpsertTenderSummaryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request — missing tenderId, summary, or invalid summary sections",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                },
+                "example": {
+                  "success": false,
+                  "message": "boqSummary.vendors must include at least one vendor"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tender not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Tender not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                },
+                "example": {
+                  "success": false,
+                  "message": "An unexpected server error occurred"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ErrorMessage": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "ScopeCoverageRow": {
+        "type": "object",
+        "required": ["metric", "result"],
+        "properties": {
+          "metric": {
+            "type": "string",
+            "description": "Coverage metric label"
+          },
+          "result": {
+            "type": "string",
+            "description": "Coverage metric value"
+          }
+        }
+      },
+      "BoqVendorSummary": {
+        "type": "object",
+        "required": ["vendorName", "matchStatus", "coverageSummary", "keyDifferences"],
+        "properties": {
+          "vendorName": {
+            "type": "string",
+            "description": "Vendor company name (one entry per submitted proposal)"
+          },
+          "matchStatus": {
+            "type": "string",
+            "description": "BOQ match status label, e.g. Mostly Matched"
+          },
+          "scopeCoverage": {
+            "type": "array",
+            "description": "Optional scope coverage metrics table",
+            "items": {
+              "$ref": "#/components/schemas/ScopeCoverageRow"
+            }
+          },
+          "coverageSummary": {
+            "type": "string",
+            "description": "Narrative coverage summary for this vendor"
+          },
+          "keyDifferences": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string"
+            },
+            "description": "Bullet list of key BOQ differences for this vendor"
+          }
+        }
+      },
+      "BoqSummary": {
+        "type": "object",
+        "required": ["vendors", "overall", "conclusion"],
+        "properties": {
+          "vendors": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/BoqVendorSummary"
+            }
+          },
+          "overall": {
+            "type": "string",
+            "description": "Overall BOQ comparison across all vendors"
+          },
+          "conclusion": {
+            "type": "string",
+            "description": "Final BOQ recommendation across all vendors"
+          }
+        }
+      },
+      "PricingOverviewRow": {
+        "type": "object",
+        "required": ["metric", "count"],
+        "properties": {
+          "metric": {
+            "type": "string"
+          },
+          "count": {
+            "type": "number"
+          }
+        }
+      },
+      "HistoricalPriceRow": {
+        "type": "object",
+        "required": ["item", "vendorPrice", "historicalPrice", "variance"],
+        "properties": {
+          "item": {
+            "type": "string"
+          },
+          "vendorPrice": {
+            "type": "string",
+            "description": "Formatted vendor price"
+          },
+          "historicalPrice": {
+            "type": "string",
+            "description": "Formatted historical benchmark price"
+          },
+          "variance": {
+            "type": "string",
+            "description": "Variance percentage, e.g. +8.13% or -21.13%"
+          }
+        }
+      },
+      "HistoricalVendorSummary": {
+        "type": "object",
+        "required": ["vendorName", "pricingOverview", "aboveHistorical", "belowHistorical"],
+        "properties": {
+          "vendorName": {
+            "type": "string",
+            "description": "Vendor company name (one entry per submitted proposal)"
+          },
+          "pricingOverview": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/PricingOverviewRow"
+            }
+          },
+          "aboveHistorical": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HistoricalPriceRow"
+            },
+            "description": "Items priced above historical benchmark"
+          },
+          "belowHistorical": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HistoricalPriceRow"
+            },
+            "description": "Items priced below historical benchmark"
+          },
+          "commercialObservation": {
+            "type": "string",
+            "description": "Optional per-vendor commercial observation"
+          }
+        }
+      },
+      "HistoricalSummary": {
+        "type": "object",
+        "required": ["vendors", "overall", "conclusion"],
+        "properties": {
+          "vendors": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/HistoricalVendorSummary"
+            }
+          },
+          "overall": {
+            "type": "string",
+            "description": "Overall commercial comparison across all vendors"
+          },
+          "conclusion": {
+            "type": "string",
+            "description": "Final commercial recommendation across all vendors"
+          }
+        }
+      },
+      "TenderSummaryContent": {
+        "type": "object",
+        "required": ["boqSummary", "historicalSummary"],
+        "properties": {
+          "boqSummary": {
+            "$ref": "#/components/schemas/BoqSummary"
+          },
+          "historicalSummary": {
+            "$ref": "#/components/schemas/HistoricalSummary"
+          }
+        }
+      },
+      "UpsertTenderSummaryRequest": {
+        "type": "object",
+        "required": ["tenderId", "summary"],
+        "properties": {
+          "tenderId": {
+            "type": "string",
+            "description": "MongoDB ObjectId of the tender from agent context"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/TenderSummaryContent"
+          }
+        }
+      },
+      "TenderSummaryRecord": {
+        "type": "object",
+        "required": ["_id", "tenderId", "summary"],
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "tenderId": {
+            "type": "string"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/TenderSummaryContent"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "UpsertTenderSummaryResponse": {
+        "type": "object",
+        "required": ["success", "tenderSummary"],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [true]
+          },
+          "tenderSummary": {
+            "$ref": "#/components/schemas/TenderSummaryRecord"
+          }
+        }
+      }
+    }
+  }
+}

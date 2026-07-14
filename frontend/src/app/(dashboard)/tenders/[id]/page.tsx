@@ -5,7 +5,6 @@ import {
   Box, Typography, Card, CardContent, Chip, Button, Alert, CircularProgress,
   Divider, TextField, MenuItem, IconButton, Tooltip, Link as MuiLink, Avatar, Tabs, Tab,
   Drawer, List, ListItem, ListItemText, ListItemIcon, Dialog, DialogTitle, DialogContent, DialogActions,
-  ToggleButton, ToggleButtonGroup,
 } from '@mui/material';
 import {
   ArrowBack as BackIcon, CloudUpload as UploadIcon, PictureAsPdf as PdfIcon,
@@ -16,9 +15,11 @@ import {
 import { useParams, useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import apiClient from '@/lib/apiClient';
+import axios from 'axios';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { isAwardedStatus, proposalStatusLabelKey } from '@/lib/proposalStatus';
+import TenderSummaryDrawer, { type TenderSummaryData } from '@/components/tender/TenderSummaryDrawer';
 
 const STATUS_OPTIONS = ['Pending', 'Reviewed', 'Awarded', 'Rejected', 'Shortlisted'];
 const STATUS_COLORS: Record<string, 'default' | 'warning' | 'info' | 'success' | 'error' | 'primary'> = {
@@ -64,21 +65,6 @@ interface Tender {
   attachments?: string[];
 }
 
-interface SummarySection {
-  title: string;
-  overall: string;
-  conclusion: string;
-}
-
-interface TenderSummary {
-  _id: string;
-  tenderId: string;
-  summary: {
-    boqSummary: SummarySection;
-    historicalSummary: SummarySection;
-  };
-}
-
 export default function TenderDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
@@ -99,10 +85,9 @@ export default function TenderDetailPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [summaryDrawerOpen, setSummaryDrawerOpen] = useState(false);
-  const [tenderSummary, setTenderSummary] = useState<TenderSummary | null>(null);
+  const [tenderSummary, setTenderSummary] = useState<TenderSummaryData | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [summaryError, setSummaryError] = useState('');
-  const [summaryTab, setSummaryTab] = useState<'boq' | 'historical'>('boq');
 
   const STATUS_TABS = [
     { value: 'all', labelKey: 'proposals.statusAll' },
@@ -198,15 +183,19 @@ export default function TenderDetailPage() {
 
   const handleOpenSummary = async () => {
     setSummaryDrawerOpen(true);
-    setSummaryTab('boq');
     setSummaryLoading(true);
     setSummaryError('');
     setTenderSummary(null);
     try {
       const { data } = await apiClient.get(`/tender-summaries/tender/${id}`);
-      setTenderSummary(data.tenderSummary);
+      setTenderSummary(data?.tenderSummary ?? null);
     } catch (err: unknown) {
-      setSummaryError(err instanceof Error ? err.message : t('tenders.summaryLoadError'));
+      if (axios.isAxiosError(err) && err.response?.status === 404) {
+        setTenderSummary(null);
+        setSummaryError('');
+      } else {
+        setSummaryError(err instanceof Error ? err.message : t('tenders.summaryLoadError'));
+      }
     } finally {
       setSummaryLoading(false);
     }
@@ -216,7 +205,6 @@ export default function TenderDetailPage() {
     setSummaryDrawerOpen(false);
     setSummaryError('');
     setTenderSummary(null);
-    setSummaryTab('boq');
   };
 
   const handleDelete = async () => {
@@ -826,127 +814,13 @@ export default function TenderDetailPage() {
           })()}
         </Drawer>
 
-        {/* ── Tender Summary Drawer ── */}
-        <Drawer
-          anchor="right"
+        <TenderSummaryDrawer
           open={summaryDrawerOpen}
           onClose={handleCloseSummary}
-          PaperProps={{
-            sx: { width: { xs: '100%', sm: 480 }, maxWidth: '100%' },
-          }}
-        >
-          <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', bgcolor: 'background.default' }}>
-            <Box
-              sx={{
-                p: 2,
-                borderBottom: 1,
-                borderColor: 'divider',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                bgcolor: 'background.paper',
-              }}
-            >
-              <Typography variant="h6" fontWeight={700}>{t('tenders.summaryTitle')}</Typography>
-              <IconButton size="small" onClick={handleCloseSummary}><CloseIcon /></IconButton>
-            </Box>
-
-            {tenderSummary && !summaryLoading && !summaryError && (
-              <Box sx={{ px: 2, pt: 2, bgcolor: 'background.paper', borderBottom: 1, borderColor: 'divider' }}>
-                <ToggleButtonGroup
-                  value={summaryTab}
-                  exclusive
-                  fullWidth
-                  onChange={(_, value: 'boq' | 'historical' | null) => {
-                    if (value) setSummaryTab(value);
-                  }}
-                  sx={{
-                    mb: 2,
-                    '& .MuiToggleButton-root': {
-                      textTransform: 'none',
-                      fontWeight: 600,
-                      py: 1,
-                      borderRadius: '10px !important',
-                      border: '1px solid',
-                      borderColor: 'divider',
-                      '&.Mui-selected': {
-                        color: 'primary.contrastText',
-                        background: 'linear-gradient(135deg, #2563EB, #7C3AED)',
-                        borderColor: 'transparent',
-                        '&:hover': {
-                          background: 'linear-gradient(135deg, #1D4ED8, #6D28D9)',
-                        },
-                      },
-                    },
-                    '& .MuiToggleButtonGroup-grouped:not(:first-of-type)': {
-                      ml: 1,
-                      borderLeft: '1px solid',
-                      borderColor: 'divider',
-                    },
-                  }}
-                >
-                  <ToggleButton value="boq">{t('tenders.summaryTabBoq')}</ToggleButton>
-                  <ToggleButton value="historical">{t('tenders.summaryTabHistorical')}</ToggleButton>
-                </ToggleButtonGroup>
-              </Box>
-            )}
-
-            <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
-              {summaryLoading ? (
-                <Box display="flex" justifyContent="center" py={6}>
-                  <CircularProgress size={28} />
-                </Box>
-              ) : summaryError ? (
-                <Alert severity="error">{summaryError}</Alert>
-              ) : !tenderSummary ? (
-                <Alert severity="info">{t('tenders.summaryNotFound')}</Alert>
-              ) : (() => {
-                const section = summaryTab === 'boq'
-                  ? tenderSummary.summary.boqSummary
-                  : tenderSummary.summary.historicalSummary;
-                return (
-                  <Card
-                    elevation={0}
-                    sx={{
-                      borderRadius: 2.5,
-                      border: '1px solid',
-                      borderColor: 'divider',
-                      bgcolor: 'background.paper',
-                      boxShadow: '0 8px 24px rgba(15, 23, 42, 0.06)',
-                    }}
-                  >
-                    <CardContent sx={{ p: 3 }}>
-                      <Chip
-                        label={section.title}
-                        size="small"
-                        color="primary"
-                        variant="outlined"
-                        sx={{ mb: 2, fontWeight: 600 }}
-                      />
-                      <Box sx={{ mb: 2.5 }}>
-                        <Typography variant="overline" color="primary" sx={{ display: 'block', mb: 1, fontWeight: 700 }}>
-                          {t('tenders.summaryOverall')}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.8 }}>
-                          {section.overall}
-                        </Typography>
-                      </Box>
-                      <Divider sx={{ my: 2 }} />
-                      <Box>
-                        <Typography variant="overline" color="primary" sx={{ display: 'block', mb: 1, fontWeight: 700 }}>
-                          {t('tenders.summaryConclusion')}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.8 }}>
-                          {section.conclusion}
-                        </Typography>
-                      </Box>
-                    </CardContent>
-                  </Card>
-                );
-              })()}
-            </Box>
-          </Box>
-        </Drawer>
+          loading={summaryLoading}
+          error={summaryError}
+          tenderSummary={tenderSummary}
+        />
 
         <Dialog
           open={deleteDialogOpen}
