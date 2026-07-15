@@ -22,6 +22,7 @@ import {
 import {
   Close as CloseIcon,
   ExpandMore as ExpandMoreIcon,
+  Insights as SummaryHeaderIcon,
 } from '@mui/icons-material';
 import { useLanguage } from '@/context/LanguageContext';
 import {
@@ -49,14 +50,16 @@ const panelSx = {
   '&.Mui-expanded': { margin: 0 },
 };
 
+const drawerPaddingX = { xs: 3, sm: 4 };
+
 const accordionSummarySx = {
-  minHeight: 48,
-  px: 2,
+  minHeight: 52,
+  px: 2.5,
   bgcolor: 'grey.50',
   borderBottom: '1px solid',
   borderColor: 'divider',
-  '&.Mui-expanded': { minHeight: 48 },
-  '& .MuiAccordionSummary-content': { my: 1 },
+  '&.Mui-expanded': { minHeight: 52 },
+  '& .MuiAccordionSummary-content': { my: 1.25, alignItems: 'center' },
 };
 
 function MatchStatusBadge({ status }: { status: string }) {
@@ -88,7 +91,7 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
     <Typography
       variant="caption"
       color="text.secondary"
-      sx={{ display: 'block', mb: 0.75, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}
+      sx={{ display: 'block', mb: 1, mt: 0.5, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}
     >
       {children}
     </Typography>
@@ -106,7 +109,7 @@ function EmptyHint({ message }: { message: string }) {
 function SummaryTable({ headers, rows }: { headers: string[]; rows: string[][] }) {
   if (rows.length === 0) return null;
   return (
-    <TableContainer sx={{ border: '1px solid', borderColor: 'divider', mb: 2 }}>
+    <TableContainer sx={{ border: '1px solid', borderColor: 'divider', mb: 2.5 }}>
       <Table size="small">
         <TableHead>
           <TableRow>
@@ -160,7 +163,7 @@ function BoqVendorPanel({ vendor }: { vendor: BoqVendorSummary }) {
   return (
     <Box>
       <SectionHeading>{t('tenders.summaryMatchStatus')}</SectionHeading>
-      <Box sx={{ mb: 2 }}>
+      <Box sx={{ mb: 3 }}>
         <MatchStatusBadge status={vendor.matchStatus} />
       </Box>
 
@@ -177,7 +180,7 @@ function BoqVendorPanel({ vendor }: { vendor: BoqVendorSummary }) {
       {vendor.coverageSummary.trim() && (
         <>
           <SectionHeading>{t('tenders.summaryCoverageSummary')}</SectionHeading>
-          <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.7, mb: 2 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.7, mb: 3 }}>
             {vendor.coverageSummary}
           </Typography>
         </>
@@ -209,7 +212,7 @@ function HistoricalVendorPanel({ vendor }: { vendor: HistoricalVendorSummary }) 
   ];
 
   const renderPriceTable = (rows: HistoricalVendorSummary['aboveHistorical']) => (
-    <TableContainer sx={{ border: '1px solid', borderColor: 'divider', mb: 2 }}>
+    <TableContainer sx={{ border: '1px solid', borderColor: 'divider', mb: 2.5 }}>
       <Table size="small">
         <TableHead>
           <TableRow>
@@ -279,23 +282,87 @@ function OverallConclusion({ overall, conclusion }: { overall: string; conclusio
   if (!hasOverall && !hasConclusion) return null;
 
   return (
-    <Box sx={{ mt: 3, pt: 3, borderTop: '1px solid', borderColor: 'divider' }}>
-      {hasOverall && (
-        <Box sx={{ mb: hasConclusion ? 2.5 : 0 }}>
-          <SectionHeading>{t('tenders.summaryOverall')}</SectionHeading>
-          <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.7 }}>
-            {overall}
+    <Box
+      sx={{
+        mt: 4,
+        pt: 3,
+        borderTop: '1px solid',
+        borderColor: 'divider',
+      }}
+    >
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        sx={{ display: 'block', mb: 2, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}
+      >
+        {t('tenders.summaryCrossVendor')}
+      </Typography>
+
+      <Box sx={{ border: '1px solid', borderColor: 'divider', bgcolor: 'grey.50', px: 2.5, py: 2.5 }}>
+        {hasOverall && (
+          <Box sx={{ mb: hasConclusion ? 2.5 : 0 }}>
+            <SectionHeading>{t('tenders.summaryOverall')}</SectionHeading>
+            <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.7 }}>
+              {overall}
+            </Typography>
+          </Box>
+        )}
+        {hasConclusion && (
+          <Box sx={hasOverall ? { pt: 2.5, borderTop: '1px solid', borderColor: 'divider' } : undefined}>
+            <SectionHeading>{t('tenders.summaryConclusion')}</SectionHeading>
+            <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.7 }}>
+              {conclusion}
+            </Typography>
+          </Box>
+        )}
+      </Box>
+    </Box>
+  );
+}
+
+function TabSectionHeader({
+  title,
+  description,
+  vendorCount,
+}: {
+  title: string;
+  description: string;
+  vendorCount: number;
+}) {
+  const { t } = useLanguage();
+  const countLabel =
+    vendorCount === 1
+      ? t('tenders.summaryVendorCount_one', { count: vendorCount })
+      : t('tenders.summaryVendorCount_other', { count: vendorCount });
+
+  return (
+    <Box sx={{ mb: 2 }}>
+      <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 2 }}>
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography variant="subtitle1" fontWeight={600} sx={{ letterSpacing: '-0.01em', mb: 0.5 }}>
+            {title}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.65, fontSize: '0.8125rem' }}>
+            {description}
           </Typography>
         </Box>
-      )}
-      {hasConclusion && (
-        <Box>
-          <SectionHeading>{t('tenders.summaryConclusion')}</SectionHeading>
-          <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.7 }}>
-            {conclusion}
-          </Typography>
-        </Box>
-      )}
+        {vendorCount > 0 && (
+          <Box
+            sx={{
+              flexShrink: 0,
+              px: 1.25,
+              py: 0.5,
+              border: '1px solid',
+              borderColor: 'divider',
+              bgcolor: 'background.paper',
+            }}
+          >
+            <Typography variant="caption" fontWeight={600} color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
+              {countLabel}
+            </Typography>
+          </Box>
+        )}
+      </Box>
     </Box>
   );
 }
@@ -304,19 +371,26 @@ function SectionTabBar({
   summaryTab,
   showBoqTab,
   showHistoricalTab,
+  boqVendorCount,
+  historicalVendorCount,
   onChange,
 }: {
   summaryTab: 'boq' | 'historical';
   showBoqTab: boolean;
   showHistoricalTab: boolean;
+  boqVendorCount: number;
+  historicalVendorCount: number;
   onChange: (tab: 'boq' | 'historical') => void;
 }) {
   const { t } = useLanguage();
 
   if (!showBoqTab && !showHistoricalTab) return null;
 
+  const tabLabel = (base: string, count: number) =>
+    count > 0 ? `${base} (${count})` : base;
+
   return (
-    <Box sx={{ display: 'flex', borderBottom: '1px solid', borderColor: 'divider' }}>
+    <Box sx={{ display: 'flex', borderBottom: '1px solid', borderColor: 'divider', px: drawerPaddingX }}>
       {showBoqTab && (
         <Button
           onClick={() => onChange('boq')}
@@ -336,7 +410,7 @@ function SectionTabBar({
             '&:hover': { bgcolor: 'transparent', color: 'text.primary' },
           }}
         >
-          {t('tenders.summaryTabBoq')}
+          {tabLabel(t('tenders.summaryTabBoq'), boqVendorCount)}
         </Button>
       )}
       {showHistoricalTab && (
@@ -358,7 +432,7 @@ function SectionTabBar({
             '&:hover': { bgcolor: 'transparent', color: 'text.primary' },
           }}
         >
-          {t('tenders.summaryTabHistorical')}
+          {tabLabel(t('tenders.summaryTabHistorical'), historicalVendorCount)}
         </Button>
       )}
     </Box>
@@ -382,15 +456,26 @@ export default function TenderSummaryDrawer({
   const historicalSection = normalizedSummary?.historicalSummary;
   const activeSection = summaryTab === 'boq' ? boqSection : historicalSection;
   const vendors = activeSection?.vendors ?? [];
+  const boqVendorCount = boqSection?.vendors.length ?? 0;
+  const historicalVendorCount = historicalSection?.vendors.length ?? 0;
   const hasVendorPanels = vendors.length > 0;
   const hasNarrative = !!(activeSection?.overall.trim() || activeSection?.conclusion.trim());
   const showBoqTab = hasSectionContent(boqSection);
   const showHistoricalTab = hasSectionContent(historicalSection);
-
   const panelIds = useMemo(
     () => vendors.map((_, index) => `vendor-${summaryTab}-${index}`),
     [vendors, summaryTab]
   );
+  const allExpanded = panelIds.length > 0 && panelIds.every((id) => expandedPanels.includes(id));
+
+  const sectionTitle =
+    summaryTab === 'boq'
+      ? t('tenders.summaryBoqSectionTitle')
+      : t('tenders.summaryHistoricalSectionTitle');
+  const sectionDescription =
+    summaryTab === 'boq'
+      ? t('tenders.summaryBoqSectionDesc')
+      : t('tenders.summaryHistoricalSectionDesc');
 
   useEffect(() => {
     if (!open) return;
@@ -415,6 +500,10 @@ export default function TenderSummaryDrawer({
     );
   };
 
+  const handleToggleAll = () => {
+    setExpandedPanels(allExpanded ? [] : panelIds);
+  };
+
   return (
     <Drawer
       anchor="right"
@@ -433,8 +522,8 @@ export default function TenderSummaryDrawer({
       <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', bgcolor: 'background.paper' }}>
         <Box
           sx={{
-            px: 2,
-            py: 1.5,
+            px: drawerPaddingX,
+            py: 2,
             borderBottom: '1px solid',
             borderColor: 'divider',
             display: 'flex',
@@ -442,8 +531,24 @@ export default function TenderSummaryDrawer({
             justifyContent: 'space-between',
           }}
         >
-          <Typography variant="subtitle1" fontWeight={600}>{t('tenders.summaryTitle')}</Typography>
-          <IconButton size="small" onClick={onClose} sx={{ color: 'text.secondary' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
+            <SummaryHeaderIcon
+              sx={{
+                fontSize: 26,
+                flexShrink: 0,
+                color: 'primary.main',
+              }}
+            />
+            <Box sx={{ minWidth: 0 }}>
+              <Typography variant="subtitle1" fontWeight={600} sx={{ lineHeight: 1.3 }}>
+                {t('tenders.summaryTitle')}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {t('tenders.summaryTitleSub')}
+              </Typography>
+            </Box>
+          </Box>
+          <IconButton size="small" onClick={onClose} sx={{ color: 'text.secondary', flexShrink: 0 }}>
             <CloseIcon fontSize="small" />
           </IconButton>
         </Box>
@@ -453,11 +558,13 @@ export default function TenderSummaryDrawer({
             summaryTab={summaryTab}
             showBoqTab={showBoqTab}
             showHistoricalTab={showHistoricalTab}
+            boqVendorCount={boqVendorCount}
+            historicalVendorCount={historicalVendorCount}
             onChange={setSummaryTab}
           />
         )}
 
-        <Box sx={{ flex: 1, overflow: 'auto', px: 2, py: 2 }}>
+        <Box sx={{ flex: 1, overflow: 'auto', px: drawerPaddingX, py: 3 }}>
           {loading ? (
             <Box display="flex" justifyContent="center" py={6}>
               <CircularProgress size={24} />
@@ -470,8 +577,36 @@ export default function TenderSummaryDrawer({
             <Alert severity="info" variant="outlined">{t('tenders.summaryPartialEmpty')}</Alert>
           ) : (
             <>
+              {(hasVendorPanels || hasNarrative) && (
+                <TabSectionHeader
+                  title={sectionTitle}
+                  description={sectionDescription}
+                  vendorCount={vendors.length}
+                />
+              )}
+
               {hasVendorPanels && (
-                <Box sx={{ border: '1px solid', borderColor: 'divider' }}>
+                <Box>
+                  {vendors.length > 1 && (
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 0.75 }}>
+                      <Button
+                        size="small"
+                        onClick={handleToggleAll}
+                        sx={{
+                          p: 0,
+                          minWidth: 0,
+                          textTransform: 'none',
+                          fontSize: '0.75rem',
+                          fontWeight: 400,
+                          color: 'text.disabled',
+                          '&:hover': { bgcolor: 'transparent', color: 'text.secondary' },
+                        }}
+                      >
+                        {allExpanded ? t('tenders.summaryCollapseAll') : t('tenders.summaryExpandAll')}
+                      </Button>
+                    </Box>
+                  )}
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   {vendors.map((vendor, index) => {
                     const panelId = panelIds[index];
                     const vendorLabel = vendor.vendorName || `${t('tenders.summaryVendorFallback')} ${index + 1}`;
@@ -483,20 +618,26 @@ export default function TenderSummaryDrawer({
                         onChange={handleAccordionChange(panelId)}
                         disableGutters
                         elevation={0}
-                        sx={{
-                          ...panelSx,
-                          '&:not(:last-child)': { borderBottom: 0 },
-                        }}
+                        sx={panelSx}
                       >
                         <AccordionSummary
                           expandIcon={<ExpandMoreIcon fontSize="small" />}
                           sx={accordionSummarySx}
                         >
-                          <Typography variant="body2" fontWeight={600}>
-                            {vendorLabel}
-                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
+                            <Typography
+                              variant="caption"
+                              color="text.disabled"
+                              sx={{ fontWeight: 600, minWidth: 22, flexShrink: 0 }}
+                            >
+                              {String(index + 1).padStart(2, '0')}
+                            </Typography>
+                            <Typography variant="body2" fontWeight={600} sx={{ lineHeight: 1.4 }}>
+                              {vendorLabel}
+                            </Typography>
+                          </Box>
                         </AccordionSummary>
-                        <AccordionDetails sx={{ px: 2, py: 2 }}>
+                        <AccordionDetails sx={{ px: 2.5, py: 2.5 }}>
                           {summaryTab === 'boq' ? (
                             <BoqVendorPanel vendor={vendor as BoqVendorSummary} />
                           ) : (
@@ -506,6 +647,7 @@ export default function TenderSummaryDrawer({
                       </Accordion>
                     );
                   })}
+                  </Box>
                 </Box>
               )}
 
