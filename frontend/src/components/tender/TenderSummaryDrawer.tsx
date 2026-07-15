@@ -46,6 +46,7 @@ const panelSx = {
   borderColor: 'divider',
   borderRadius: 0,
   boxShadow: 'none',
+  bgcolor: 'background.paper',
   '&:before': { display: 'none' },
   '&.Mui-expanded': { margin: 0 },
 };
@@ -55,11 +56,30 @@ const drawerPaddingX = { xs: 3, sm: 4 };
 const accordionSummarySx = {
   minHeight: 52,
   px: 2.5,
-  bgcolor: 'grey.50',
+  bgcolor: 'action.hover',
+  color: 'text.primary',
   borderBottom: '1px solid',
   borderColor: 'divider',
   '&.Mui-expanded': { minHeight: 52 },
   '& .MuiAccordionSummary-content': { my: 1.25, alignItems: 'center' },
+  '& .MuiAccordionSummary-expandIconWrapper': { color: 'text.secondary' },
+};
+
+const tableHeadCellSx = {
+  fontWeight: 600,
+  py: 1,
+  fontSize: '0.75rem',
+  bgcolor: 'action.hover',
+  color: 'text.secondary',
+  borderBottom: '1px solid',
+  borderColor: 'divider',
+};
+
+const tableBodyCellSx = {
+  py: 1,
+  fontSize: '0.8125rem',
+  borderColor: 'divider',
+  color: 'text.primary',
 };
 
 function MatchStatusBadge({ status }: { status: string }) {
@@ -81,7 +101,7 @@ function MatchStatusBadge({ status }: { status: string }) {
           }}
         />
       )}
-      <Typography variant="body2" fontWeight={500}>{label}</Typography>
+      <Typography variant="body2" fontWeight={500} color="text.primary">{label}</Typography>
     </Box>
   );
 }
@@ -100,7 +120,7 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
 
 function EmptyHint({ message }: { message: string }) {
   return (
-    <Typography variant="body2" color="text.disabled" sx={{ mb: 2 }}>
+    <Typography variant="body2" color="text.secondary" sx={{ mb: 2, fontStyle: 'italic' }}>
       {message}
     </Typography>
   );
@@ -114,10 +134,7 @@ function SummaryTable({ headers, rows }: { headers: string[]; rows: string[][] }
         <TableHead>
           <TableRow>
             {headers.map((header) => (
-              <TableCell
-                key={header}
-                sx={{ fontWeight: 600, py: 1, fontSize: '0.75rem', bgcolor: 'grey.50', borderBottom: '1px solid', borderColor: 'divider' }}
-              >
+              <TableCell key={header} sx={tableHeadCellSx}>
                 {header}
               </TableCell>
             ))}
@@ -127,9 +144,7 @@ function SummaryTable({ headers, rows }: { headers: string[]; rows: string[][] }
           {rows.map((row, index) => (
             <TableRow key={index}>
               {row.map((cell, cellIndex) => (
-                <TableCell key={cellIndex} sx={{ py: 1, fontSize: '0.8125rem', borderColor: 'divider' }}>
-                  {cell}
-                </TableCell>
+                <TableCell key={cellIndex} sx={tableBodyCellSx}>{cell}</TableCell>
               ))}
             </TableRow>
           ))}
@@ -217,10 +232,7 @@ function HistoricalVendorPanel({ vendor }: { vendor: HistoricalVendorSummary }) 
         <TableHead>
           <TableRow>
             {priceHeaders.map((header) => (
-              <TableCell
-                key={header}
-                sx={{ fontWeight: 600, py: 1, fontSize: '0.75rem', bgcolor: 'grey.50', borderBottom: '1px solid', borderColor: 'divider' }}
-              >
+              <TableCell key={header} sx={tableHeadCellSx}>
                 {header}
               </TableCell>
             ))}
@@ -229,10 +241,10 @@ function HistoricalVendorPanel({ vendor }: { vendor: HistoricalVendorSummary }) 
         <TableBody>
           {rows.map((row, index) => (
             <TableRow key={`${row.item}-${index}`}>
-              <TableCell sx={{ py: 1, fontSize: '0.8125rem', borderColor: 'divider' }}>{row.item || '—'}</TableCell>
-              <TableCell sx={{ py: 1, fontSize: '0.8125rem', borderColor: 'divider' }}>{row.vendorPrice || '—'}</TableCell>
-              <TableCell sx={{ py: 1, fontSize: '0.8125rem', borderColor: 'divider' }}>{row.historicalPrice || '—'}</TableCell>
-              <TableCell sx={{ py: 1, fontSize: '0.8125rem', borderColor: 'divider' }}><VarianceCell value={row.variance} /></TableCell>
+              <TableCell sx={tableBodyCellSx}>{row.item || '—'}</TableCell>
+              <TableCell sx={tableBodyCellSx}>{row.vendorPrice || '—'}</TableCell>
+              <TableCell sx={tableBodyCellSx}>{row.historicalPrice || '—'}</TableCell>
+              <TableCell sx={tableBodyCellSx}><VarianceCell value={row.variance} /></TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -298,7 +310,7 @@ function OverallConclusion({ overall, conclusion }: { overall: string; conclusio
         {t('tenders.summaryCrossVendor')}
       </Typography>
 
-      <Box sx={{ border: '1px solid', borderColor: 'divider', bgcolor: 'grey.50', px: 2.5, py: 2.5 }}>
+      <Box sx={{ border: '1px solid', borderColor: 'divider', bgcolor: 'action.hover', px: 2.5, py: 2.5 }}>
         {hasOverall && (
           <Box sx={{ mb: hasConclusion ? 2.5 : 0 }}>
             <SectionHeading>{t('tenders.summaryOverall')}</SectionHeading>
@@ -354,7 +366,7 @@ function TabSectionHeader({
               py: 0.5,
               border: '1px solid',
               borderColor: 'divider',
-              bgcolor: 'background.paper',
+              bgcolor: 'action.hover',
             }}
           >
             <Typography variant="caption" fontWeight={600} color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
@@ -598,8 +610,8 @@ export default function TenderSummaryDrawer({
                           textTransform: 'none',
                           fontSize: '0.75rem',
                           fontWeight: 400,
-                          color: 'text.disabled',
-                          '&:hover': { bgcolor: 'transparent', color: 'text.secondary' },
+                          color: 'text.secondary',
+                          '&:hover': { bgcolor: 'transparent', color: 'text.primary' },
                         }}
                       >
                         {allExpanded ? t('tenders.summaryCollapseAll') : t('tenders.summaryExpandAll')}
@@ -627,17 +639,17 @@ export default function TenderSummaryDrawer({
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
                             <Typography
                               variant="caption"
-                              color="text.disabled"
+                              color="text.secondary"
                               sx={{ fontWeight: 600, minWidth: 22, flexShrink: 0 }}
                             >
                               {String(index + 1).padStart(2, '0')}
                             </Typography>
-                            <Typography variant="body2" fontWeight={600} sx={{ lineHeight: 1.4 }}>
+                            <Typography variant="body2" fontWeight={600} color="text.primary" sx={{ lineHeight: 1.4 }}>
                               {vendorLabel}
                             </Typography>
                           </Box>
                         </AccordionSummary>
-                        <AccordionDetails sx={{ px: 2.5, py: 2.5 }}>
+                        <AccordionDetails sx={{ px: 2.5, py: 2.5, bgcolor: 'background.paper' }}>
                           {summaryTab === 'boq' ? (
                             <BoqVendorPanel vendor={vendor as BoqVendorSummary} />
                           ) : (
