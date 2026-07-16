@@ -59,6 +59,8 @@ const historicalVendorSchema = new mongoose.Schema(
     pricingOverview: { type: [pricingOverviewRowSchema], default: [] },
     aboveHistorical: { type: [historicalPriceRowSchema], default: [] },
     belowHistorical: { type: [historicalPriceRowSchema], default: [] },
+    comparableHistorical: { type: [historicalPriceRowSchema], default: [] },
+    noHistoricalRate: { type: [historicalPriceRowSchema], default: [] },
     commercialObservation: { type: String, trim: true, default: '' },
   },
   { _id: false }

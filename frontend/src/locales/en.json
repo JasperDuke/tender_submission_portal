@@ -242,6 +242,8 @@
     "summaryPricingOverview": "Pricing Overview",
     "summaryAboveHistorical": "Above Historical Benchmark",
     "summaryBelowHistorical": "Below Historical Benchmark",
+    "summaryComparableHistorical": "Comparable to Historical Benchmark",
+    "summaryNoHistoricalRate": "No Historical Rate",
     "summaryCommercialObservation": "Commercial Observation",
     "summaryMetric": "Metric",
     "summaryResult": "Result",

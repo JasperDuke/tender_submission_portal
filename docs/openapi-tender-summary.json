@@ -2,8 +2,8 @@
   "openapi": "3.0.3",
   "info": {
     "title": "DemoSourcing API - Tender Summary Callback",
-    "version": "2.1.0",
-    "description": "Submit AI-generated tender summaries for a published tender. Send `tenderId` from agent context plus `summary` with per-vendor `boqSummary` and `historicalSummary` sections. `pricingOverview` may be empty when historical benchmark data is unavailable. Numeric counts may be sent as strings. No authentication required."
+    "version": "2.2.0",
+    "description": "Submit AI-generated tender summaries for a published tender. Send `tenderId` from agent context plus `summary` with per-vendor `boqSummary` and `historicalSummary` sections. Historical vendor data includes four item tables: `aboveHistorical`, `belowHistorical`, `comparableHistorical`, and `noHistoricalRate`. `pricingOverview` may be empty when historical benchmark data is unavailable. Numeric counts may be sent as strings. No authentication required."
   },
   "servers": [
     {
@@ -86,6 +86,28 @@
                             "vendorPrice": "RM11.20",
                             "historicalPrice": "RM14.20",
                             "variance": "-21.13%"
+                          }
+                        ],
+                        "comparableHistorical": [
+                          {
+                            "item": "A2",
+                            "vendorPrice": "RM85.00",
+                            "historicalPrice": "RM84.50",
+                            "variance": "+0.59%"
+                          },
+                          {
+                            "item": "A1",
+                            "vendorPrice": "RM65.00",
+                            "historicalPrice": "RM65.00",
+                            "variance": "0.00%"
+                          }
+                        ],
+                        "noHistoricalRate": [
+                          {
+                            "item": "Custom DB Label",
+                            "vendorPrice": "RM45.00",
+                            "historicalPrice": "—",
+                            "variance": "—"
                           }
                         ],
                         "commercialObservation": "Most pricing aligns closely with historical benchmark."
@@ -321,6 +343,20 @@
               "$ref": "#/components/schemas/HistoricalPriceRow"
             },
             "description": "Items priced below historical benchmark"
+          },
+          "comparableHistorical": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HistoricalPriceRow"
+            },
+            "description": "Items priced comparable to historical benchmark"
+          },
+          "noHistoricalRate": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HistoricalPriceRow"
+            },
+            "description": "Items with no historical benchmark rate. Use em dash for unavailable historicalPrice and variance."
           },
           "commercialObservation": {
             "type": "string",

@@ -34,6 +34,8 @@ export interface HistoricalVendorSummary {
   pricingOverview: PricingOverviewRow[];
   aboveHistorical: HistoricalPriceRow[];
   belowHistorical: HistoricalPriceRow[];
+  comparableHistorical: HistoricalPriceRow[];
+  noHistoricalRate: HistoricalPriceRow[];
   commercialObservation: string;
 }
 
@@ -134,6 +136,44 @@ function normalizeBoqSummary(raw: unknown): BoqSummary {
   };
 }
 
+function pickFirstArray(source: Record<string, unknown>, ...keys: string[]): unknown {
+  for (const key of keys) {
+    if (Array.isArray(source[key])) return source[key];
+  }
+  return [];
+}
+
+function parseItemSortKey(item: string): { prefix: string; number: number | null } {
+  const trimmed = item.trim();
+  const match = trimmed.match(/^([A-Za-z]+)[\s-]*(\d+)/);
+  if (!match) {
+    return { prefix: trimmed.toUpperCase(), number: null };
+  }
+  return {
+    prefix: match[1].toUpperCase(),
+    number: Number.parseInt(match[2], 10),
+  };
+}
+
+function compareHistoricalItemNames(left: string, right: string): number {
+  const leftKey = parseItemSortKey(left);
+  const rightKey = parseItemSortKey(right);
+
+  const prefixCompare = leftKey.prefix.localeCompare(rightKey.prefix, undefined, { sensitivity: 'base' });
+  if (prefixCompare !== 0) return prefixCompare;
+
+  if (leftKey.number != null && rightKey.number != null) {
+    return leftKey.number - rightKey.number;
+  }
+
+  return left.localeCompare(right, undefined, { numeric: true, sensitivity: 'base' });
+}
+
+export function sortHistoricalPriceRows(rows: HistoricalPriceRow[]): HistoricalPriceRow[] {
+  if (rows.length < 2) return rows;
+  return [...rows].sort((left, right) => compareHistoricalItemNames(left.item, right.item));
+}
+
 function normalizeHistoricalPriceRows(rows: unknown): HistoricalPriceRow[] {
   if (!Array.isArray(rows)) return [];
   return rows
@@ -166,12 +206,20 @@ function normalizeHistoricalVendor(raw: unknown, index: number): HistoricalVendo
   const pricingOverview = normalizePricingOverview(vendor.pricingOverview);
   const aboveHistorical = normalizeHistoricalPriceRows(vendor.aboveHistorical);
   const belowHistorical = normalizeHistoricalPriceRows(vendor.belowHistorical);
+  const comparableHistorical = normalizeHistoricalPriceRows(
+    pickFirstArray(vendor, 'comparableHistorical', 'comparable', 'comparableItems')
+  );
+  const noHistoricalRate = normalizeHistoricalPriceRows(
+    pickFirstArray(vendor, 'noHistoricalRate', 'noHistoryRate', 'noHistorical')
+  );
   const commercialObservation = asString(vendor.commercialObservation).trim();
 
   const hasContent =
     pricingOverview.length > 0 ||
     aboveHistorical.length > 0 ||
     belowHistorical.length > 0 ||
+    comparableHistorical.length > 0 ||
+    noHistoricalRate.length > 0 ||
     commercialObservation.length > 0;
 
   if (!hasContent) return null;
@@ -181,6 +229,8 @@ function normalizeHistoricalVendor(raw: unknown, index: number): HistoricalVendo
     pricingOverview,
     aboveHistorical,
     belowHistorical,
+    comparableHistorical,
+    noHistoricalRate,
     commercialObservation,
   };
 }

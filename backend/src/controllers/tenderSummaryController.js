@@ -7,6 +7,14 @@ function trimString(value) {
   return typeof value === 'string' ? value.trim() : '';
 }
 
+function pickFirstArray(source, ...keys) {
+  if (!source || typeof source !== 'object') return [];
+  for (const key of keys) {
+    if (Array.isArray(source[key])) return source[key];
+  }
+  return [];
+}
+
 function coerceCount(value) {
   if (typeof value === 'number' && !Number.isNaN(value)) return value;
   if (typeof value === 'string' && value.trim() !== '') {
@@ -145,6 +153,18 @@ function validateHistoricalVendor(vendor, label) {
   const belowError = validateHistoricalPriceRows(vendor.belowHistorical, `${label}.belowHistorical`);
   if (belowError) return belowError;
 
+  const comparableError = validateHistoricalPriceRows(
+    pickFirstArray(vendor, 'comparableHistorical', 'comparable', 'comparableItems'),
+    `${label}.comparableHistorical`
+  );
+  if (comparableError) return comparableError;
+
+  const noRateError = validateHistoricalPriceRows(
+    pickFirstArray(vendor, 'noHistoricalRate', 'noHistoryRate', 'noHistorical'),
+    `${label}.noHistoricalRate`
+  );
+  if (noRateError) return noRateError;
+
   return validateOptionalString(vendor.commercialObservation, `${label}.commercialObservation`);
 }
 
@@ -265,6 +285,12 @@ function normalizeHistoricalVendor(vendor) {
     pricingOverview: normalizePricingOverview(vendor.pricingOverview),
     aboveHistorical: normalizeHistoricalPriceRows(vendor.aboveHistorical),
     belowHistorical: normalizeHistoricalPriceRows(vendor.belowHistorical),
+    comparableHistorical: normalizeHistoricalPriceRows(
+      pickFirstArray(vendor, 'comparableHistorical', 'comparable', 'comparableItems')
+    ),
+    noHistoricalRate: normalizeHistoricalPriceRows(
+      pickFirstArray(vendor, 'noHistoricalRate', 'noHistoryRate', 'noHistorical')
+    ),
     commercialObservation: trimString(vendor.commercialObservation),
   };
 }

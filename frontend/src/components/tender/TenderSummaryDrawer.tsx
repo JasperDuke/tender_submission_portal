@@ -28,9 +28,11 @@ import { useLanguage } from '@/context/LanguageContext';
 import {
   type BoqVendorSummary,
   type HistoricalVendorSummary,
+  type HistoricalPriceRow,
   type TenderSummaryData,
   hasSectionContent,
   normalizeTenderSummary,
+  sortHistoricalPriceRows,
 } from '@/lib/tenderSummary';
 
 interface TenderSummaryDrawerProps {
@@ -127,7 +129,6 @@ function EmptyHint({ message }: { message: string }) {
 }
 
 function SummaryTable({ headers, rows }: { headers: string[]; rows: string[][] }) {
-  if (rows.length === 0) return null;
   return (
     <TableContainer sx={{ border: '1px solid', borderColor: 'divider', mb: 2.5 }}>
       <Table size="small">
@@ -226,53 +227,57 @@ function HistoricalVendorPanel({ vendor }: { vendor: HistoricalVendorSummary }) 
     t('tenders.summaryVariance'),
   ];
 
-  const renderPriceTable = (rows: HistoricalVendorSummary['aboveHistorical']) => (
-    <TableContainer sx={{ border: '1px solid', borderColor: 'divider', mb: 2.5 }}>
-      <Table size="small">
-        <TableHead>
-          <TableRow>
-            {priceHeaders.map((header) => (
-              <TableCell key={header} sx={tableHeadCellSx}>
-                {header}
-              </TableCell>
-            ))}
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {rows.map((row, index) => (
-            <TableRow key={`${row.item}-${index}`}>
-              <TableCell sx={tableBodyCellSx}>{row.item || '—'}</TableCell>
-              <TableCell sx={tableBodyCellSx}>{row.vendorPrice || '—'}</TableCell>
-              <TableCell sx={tableBodyCellSx}>{row.historicalPrice || '—'}</TableCell>
-              <TableCell sx={tableBodyCellSx}><VarianceCell value={row.variance} /></TableCell>
+  const historicalSections: Array<{ key: string; title: string; rows: HistoricalPriceRow[] }> = [
+    { key: 'above', title: t('tenders.summaryAboveHistorical'), rows: vendor.aboveHistorical },
+    { key: 'below', title: t('tenders.summaryBelowHistorical'), rows: vendor.belowHistorical },
+    { key: 'comparable', title: t('tenders.summaryComparableHistorical'), rows: vendor.comparableHistorical },
+    { key: 'no-rate', title: t('tenders.summaryNoHistoricalRate'), rows: vendor.noHistoricalRate },
+  ];
+
+  const renderPriceTable = (rows: HistoricalPriceRow[]) => {
+    const displayRows = sortHistoricalPriceRows(rows);
+
+    return (
+      <TableContainer sx={{ border: '1px solid', borderColor: 'divider', mb: 2.5 }}>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              {priceHeaders.map((header) => (
+                <TableCell key={header} sx={tableHeadCellSx}>
+                  {header}
+                </TableCell>
+              ))}
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
-  );
+          </TableHead>
+          <TableBody>
+            {displayRows.map((row, index) => (
+              <TableRow key={`${row.item}-${index}`}>
+                <TableCell sx={tableBodyCellSx}>{row.item || '—'}</TableCell>
+                <TableCell sx={tableBodyCellSx}>{row.vendorPrice || '—'}</TableCell>
+                <TableCell sx={tableBodyCellSx}>{row.historicalPrice || '—'}</TableCell>
+                <TableCell sx={tableBodyCellSx}><VarianceCell value={row.variance} /></TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    );
+  };
 
   return (
     <Box>
       <SectionHeading>{t('tenders.summaryPricingOverview')}</SectionHeading>
-      {vendor.pricingOverview.length > 0 ? (
-        <SummaryTable
-          headers={[t('tenders.summaryMetric'), t('tenders.summaryCount')]}
-          rows={vendor.pricingOverview.map((row) => [row.metric, String(row.count)])}
-        />
-      ) : (
-        <EmptyHint message={t('tenders.summaryNoItems')} />
-      )}
+      <SummaryTable
+        headers={[t('tenders.summaryMetric'), t('tenders.summaryCount')]}
+        rows={vendor.pricingOverview.map((row) => [row.metric, String(row.count)])}
+      />
 
-      <SectionHeading>{t('tenders.summaryAboveHistorical')}</SectionHeading>
-      {vendor.aboveHistorical.length > 0 ? renderPriceTable(vendor.aboveHistorical) : (
-        <EmptyHint message={t('tenders.summaryNoItems')} />
-      )}
-
-      <SectionHeading>{t('tenders.summaryBelowHistorical')}</SectionHeading>
-      {vendor.belowHistorical.length > 0 ? renderPriceTable(vendor.belowHistorical) : (
-        <EmptyHint message={t('tenders.summaryNoItems')} />
-      )}
+      {historicalSections.map((section) => (
+        <Box key={section.key}>
+          <SectionHeading>{section.title}</SectionHeading>
+          {renderPriceTable(section.rows)}
+        </Box>
+      ))}
 
       {vendor.commercialObservation.trim() && (
         <>

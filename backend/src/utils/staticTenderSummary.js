@@ -62,11 +62,33 @@ const STATIC_TENDER_SUMMARY = {
             historicalPrice: 'RM984.00',
             variance: '+8.13%',
           },
+        ],
+        comparableHistorical: [
           {
-            item: 'B1',
-            vendorPrice: 'RM45.20/m',
-            historicalPrice: 'RM40.50/m',
-            variance: '+11.60%',
+            item: 'A10',
+            vendorPrice: 'RM120.00',
+            historicalPrice: 'RM118.00',
+            variance: '+1.69%',
+          },
+          {
+            item: 'A2',
+            vendorPrice: 'RM85.00',
+            historicalPrice: 'RM84.50',
+            variance: '+0.59%',
+          },
+          {
+            item: 'A1',
+            vendorPrice: 'RM65.00',
+            historicalPrice: 'RM65.00',
+            variance: '0.00%',
+          },
+        ],
+        noHistoricalRate: [
+          {
+            item: 'Custom DB Label',
+            vendorPrice: 'RM45.00',
+            historicalPrice: '—',
+            variance: '—',
           },
         ],
         belowHistorical: [
@@ -103,6 +125,21 @@ const STATIC_TENDER_SUMMARY = {
             variance: '+7.46%',
           },
         ],
+        comparableHistorical: [
+          {
+            item: 'B2',
+            vendorPrice: 'RM210.00',
+            historicalPrice: 'RM209.00',
+            variance: '+0.48%',
+          },
+          {
+            item: 'B1',
+            vendorPrice: 'RM180.00',
+            historicalPrice: 'RM179.50',
+            variance: '+0.28%',
+          },
+        ],
+        noHistoricalRate: [],
         belowHistorical: [
           {
             item: 'Site Office Earthing',

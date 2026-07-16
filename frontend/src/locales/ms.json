@@ -242,6 +242,8 @@
     "summaryPricingOverview": "Gambaran Harga",
     "summaryAboveHistorical": "Melebihi Penanda Sejarah",
     "summaryBelowHistorical": "Di Bawah Penanda Sejarah",
+    "summaryComparableHistorical": "Setanding dengan Penanda Sejarah",
+    "summaryNoHistoricalRate": "Tiada Kadar Sejarah",
     "summaryCommercialObservation": "Pemerhatian Komersial",
     "summaryMetric": "Metrik",
     "summaryResult": "Keputusan",
