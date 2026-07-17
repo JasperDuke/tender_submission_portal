@@ -686,8 +686,29 @@ export default function TenderDetailPage() {
           anchor="right"
           open={Boolean(selectedProposal)}
           onClose={() => setSelectedProposal(null)}
-          PaperProps={{
-            sx: { width: { xs: '100%', sm: 420 }, maxWidth: '100%' },
+          slotProps={{
+            root: {
+              keepMounted: false,
+              disableScrollLock: true,
+              sx: {
+                pointerEvents: selectedProposal ? 'auto' : 'none',
+              },
+            },
+            backdrop: {
+              sx: {
+                pointerEvents: selectedProposal ? 'auto' : 'none',
+              },
+            },
+            paper: {
+              sx: {
+                width: { xs: '100%', sm: 420 },
+                maxWidth: '100%',
+                pointerEvents: 'auto',
+              },
+            },
+          }}
+          sx={{
+            pointerEvents: selectedProposal ? 'auto' : 'none',
           }}
         >
           {selectedProposal && (() => {
@@ -814,13 +835,15 @@ export default function TenderDetailPage() {
           })()}
         </Drawer>
 
-        <TenderSummaryDrawer
-          open={summaryDrawerOpen}
-          onClose={handleCloseSummary}
-          loading={summaryLoading}
-          error={summaryError}
-          tenderSummary={tenderSummary}
-        />
+        {summaryDrawerOpen && (
+          <TenderSummaryDrawer
+            open={summaryDrawerOpen}
+            onClose={handleCloseSummary}
+            loading={summaryLoading}
+            error={summaryError}
+            tenderSummary={tenderSummary}
+          />
+        )}
 
         <Dialog
           open={deleteDialogOpen}

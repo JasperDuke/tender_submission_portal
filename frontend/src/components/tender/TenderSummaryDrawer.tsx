@@ -35,6 +35,12 @@ import {
   sortHistoricalPriceRows,
 } from '@/lib/tenderSummary';
 
+const drawerRootSlotProps = {
+  keepMounted: false,
+  disableScrollLock: true,
+  disablePortal: true,
+};
+
 interface TenderSummaryDrawerProps {
   open: boolean;
   onClose: () => void;
@@ -457,15 +463,21 @@ function SectionTabBar({
 }
 
 export default function TenderSummaryDrawer({
-  open,
+  open: _open,
   onClose,
   loading,
   error,
   tenderSummary,
 }: TenderSummaryDrawerProps) {
   const { t } = useLanguage();
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [summaryTab, setSummaryTab] = useState<'boq' | 'historical'>('boq');
   const [expandedPanels, setExpandedPanels] = useState<string[]>([]);
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setDrawerOpen(true));
+    return () => cancelAnimationFrame(frame);
+  }, []);
 
   const normalizedSummary = useMemo(() => normalizeTenderSummary(tenderSummary), [tenderSummary]);
 
@@ -522,20 +534,46 @@ export default function TenderSummaryDrawer({
   };
 
   return (
-    <Drawer
-      anchor="right"
-      open={open}
-      onClose={onClose}
-      PaperProps={{
-        sx: {
-          width: { xs: '100%', sm: 680, md: 720 },
-          maxWidth: '100%',
-          boxShadow: 'none',
-          borderLeft: '1px solid',
-          borderColor: 'divider',
-        },
-      }}
-    >
+    <>
+      <Box
+        aria-hidden
+        onClick={onClose}
+        sx={{
+          position: 'fixed',
+          inset: 0,
+          bgcolor: 'rgba(0, 0, 0, 0.5)',
+          zIndex: (theme) => theme.zIndex.drawer,
+        }}
+      />
+      <Drawer
+        anchor="right"
+        open={drawerOpen}
+        onClose={onClose}
+        hideBackdrop
+        slotProps={{
+          root: {
+            ...drawerRootSlotProps,
+            sx: { pointerEvents: 'none' },
+          },
+          transition: {
+            appear: true,
+          },
+          paper: {
+            sx: {
+              width: { xs: '100%', sm: 680, md: 720 },
+              maxWidth: '100%',
+              boxShadow: 'none',
+              borderLeft: '1px solid',
+              borderColor: 'divider',
+              pointerEvents: 'auto',
+            },
+          },
+        }}
+        sx={{
+          zIndex: (theme) => theme.zIndex.drawer + 1,
+          pointerEvents: 'none',
+        }}
+      >
       <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', bgcolor: 'background.paper' }}>
         <Box
           sx={{
@@ -682,6 +720,7 @@ export default function TenderSummaryDrawer({
         </Box>
       </Box>
     </Drawer>
+    </>
   );
 }
 
